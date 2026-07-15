@@ -1051,7 +1051,22 @@ function saveTask(){
     const t=tasks.find(x=>x.id===editId);
     if(t){t.item=document.getElementById('m-item').value||t.item;t.title=title;t.type=document.getElementById('m-type').value;t.resp=document.getElementById('m-resp').value;t.prog=selProg_val;t.obs=document.getElementById('m-obs').value;t.g=parseInt(document.getElementById('m-group').value);}
   } else {
-    tasks.push({id:'c_'+Date.now(),item:document.getElementById('m-item').value||'—',g:parseInt(document.getElementById('m-group').value),title,type:document.getElementById('m-type').value,resp:document.getElementById('m-resp').value,prog:selProg_val,obs:document.getElementById('m-obs').value});
+    const newTask={id:'c_'+Date.now(),item:document.getElementById('m-item').value||'—',g:parseInt(document.getElementById('m-group').value),title,type:document.getElementById('m-type').value,resp:document.getElementById('m-resp').value,prog:selProg_val,obs:document.getElementById('m-obs').value};
+    tasks.push(newTask);
+    // Ordenar: headers primeiro no grupo, depois por número de item
+    tasks.sort((a,b)=>{
+      const ga=a.g||0, gb=b.g||0;
+      if(ga!==gb) return ga-gb;
+      if(a.hdr&&!b.hdr) return -1;
+      if(!a.hdr&&b.hdr) return 1;
+      const parseItem=s=>(s||'').split('.').map(n=>parseInt(n)||0);
+      const na=parseItem(a.item), nb=parseItem(b.item);
+      for(let i=0;i<Math.max(na.length,nb.length);i++){
+        const d=(na[i]||0)-(nb[i]||0);
+        if(d!==0)return d;
+      }
+      return 0;
+    });
   }
   save();closeModal();renderTable();updateKPIs();initCharts();
   toast(editId?'Atividade atualizada':'Atividade adicionada','ok');
