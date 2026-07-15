@@ -625,12 +625,8 @@ tbody td { padding: 11px 16px; font-size: 13px; color: var(--text2); vertical-al
       <span class="card-title" style="display:flex;align-items:center;gap:7px"><span style="color:var(--blue);display:flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg></span>Análise Preditiva · Claude AI</span>
       <button class="btn btn-orange" onclick="runAI()" id="ai-btn">⚡ Analisar Riscos</button>
     </div>
-    <div class="ai-key-row">
-      <input class="ai-key-input" type="password" id="api-key" placeholder="sk-ant-... · Cole sua chave de API Anthropic aqui" oninput="localStorage.setItem('vli_key', this.value)">
-      <button class="btn btn-ghost" onclick="const i=document.getElementById('api-key');i.type=i.type==='password'?'text':'password'">👁</button>
-    </div>
     <div class="ai-output" id="ai-output">
-      <div style="color:var(--text4);font-size:13px;font-weight:500">Insira sua chave de API Anthropic e clique em "Analisar Riscos" para obter análise preditiva com identificação de riscos, probabilidade de conclusão no prazo e recomendações priorizadas para a frente de Benefícios.</div>
+      <div style="color:var(--text4);font-size:13px;font-weight:500">Clique em "Analisar Riscos" para obter análise preditiva com identificação de riscos, probabilidade de conclusão no prazo e recomendações priorizadas para a frente de Benefícios.</div>
     </div>
   </div>
 
@@ -721,7 +717,9 @@ tbody td { padding: 11px 16px; font-size: 13px; color: var(--text2); vertical-al
 <script>
 const GIST_ID='833803c626f116ac05b09f77c2ea177a';
 const ENCRYPTED_TOKEN='3124391f7b5348041b3f04020a044a7c15390b050309784511740f0b7b065c7b177479300b664667';
+const ENCRYPTED_AI_KEY='252764215c441f57262579731f617078372f270c7956474c1b36782b0461440f067e0b0d6775780f1d2a210f01745b47213d7b247f58477b3d157e2a776479581f780b2b0251755e3e360f24037e637e0c74182678614178351b2e795b5351573178186d685b0067111d0801';
 let _decryptedToken=null;
+let _decryptedAiKey=null;
 // ═══ DATA ═══════════════════════════════════════════
 const TASKS_DEFAULT = [
   {id:'g1',item:'1',g:1,title:'Preparação para o Paralelo',type:'Pré-requisitos',resp:'Cliente',prog:100,obs:'',hdr:true},
@@ -790,7 +788,6 @@ let macroChart, statusChart, groupChart, projChart;
 function load(){
   const s=localStorage.getItem('vli_v3');
   tasks=s?JSON.parse(s):JSON.parse(JSON.stringify(TASKS_DEFAULT));
-  document.getElementById('api-key').value=localStorage.getItem('vli_key')||'';
 }
 function save(){ localStorage.setItem('vli_v3',JSON.stringify(tasks)); localStorage.setItem('vli_last_save',Date.now().toString()); setTimeout(()=>syncToGist(false),300); }
 function active(){ return tasks.filter(t=>!t.hdr); }
@@ -1062,8 +1059,8 @@ function saveTask(){
 
 // ═══ AI ═══
 async function runAI(){
-  const key=document.getElementById('api-key').value.trim();
-  if(!key){toast('Informe sua chave de API Anthropic','warn');return;}
+  const key=_decryptedAiKey||'';
+  if(!key){toast('Faça login para usar a análise de IA','warn');return;}
   const s=stats(),d=dayInfo();
   const benefPend=active().filter(t=>(t.resp||'').includes('Benefícios')&&t.prog===0).map(t=>`[${t.item}] ${t.title}`).join('\n');
   const allPend=active().filter(t=>t.prog<100).slice(0,18).map(t=>`[${t.item}] ${t.title} — ${t.prog}%`).join('\n');
@@ -1275,6 +1272,7 @@ function doLogin(){
       return;
     }
     _decryptedToken=token;
+    _decryptedAiKey=xorDecrypt(ENCRYPTED_AI_KEY,pwd);
     const ls=document.getElementById('lock-screen');
     ls.style.transition='opacity .4s';ls.style.opacity='0';
     setTimeout(()=>{ls.style.display='none';},400);
