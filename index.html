@@ -624,24 +624,54 @@ tbody td { padding: 7px 10px; font-size: 12px; color: var(--text2); vertical-ali
     <div class="card-head">
       <span class="card-title" style="display:flex;align-items:center;gap:7px"><span style="color:var(--blue);display:flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></span>Plano do Paralelo · Todas as Atividades</span>
     </div>
-    <div class="table-controls">
-      <input class="filter-input" type="text" id="search-input" placeholder="🔍  Buscar atividade, responsável..." oninput="renderTable()">
-      <select class="filter-select" id="filter-group" onchange="renderTable()">
-        <option value="">Todos os grupos</option>
+    <div class="table-controls" style="flex-wrap:wrap;gap:8px">
+      <input class="filter-input" type="text" id="search-input" placeholder="🔍  Atividade ou responsável..." oninput="applyFilters()" style="min-width:220px;flex:2">
+      <select class="filter-select" id="filter-processo" onchange="applyFilters()">
+        <option value="">Todos os Processos</option>
+        <option value="Folha de Pagamento">Folha de Pagamento</option>
+        <option value="Benefícios">Benefícios</option>
+      </select>
+      <select class="filter-select" id="filter-group" onchange="applyFilters()">
+        <option value="">Todos os Grupos</option>
         <option value="1">Item 1 · Pré-requisitos</option>
-        <option value="2">Item 2 · Solicitação de Dados</option>
+        <option value="2">Item 2 · Dados</option>
         <option value="3">Item 3 · Execução</option>
         <option value="4">Item 4 · Benefícios</option>
       </select>
-      <select class="filter-select" id="filter-prog" onchange="renderTable()">
-        <option value="">Todos os status</option>
+      <select class="filter-select" id="filter-tipo" onchange="applyFilters()">
+        <option value="">Todos os Tipos</option>
+        <option value="Pré-requisito">Pré-requisito</option>
+        <option value="Carga">Carga</option>
+        <option value="Cálculos / Validações">Cálculos / Validações</option>
+        <option value="Validação">Validação</option>
+        <option value="Parametrização">Parametrização</option>
+        <option value="Planilha">Planilha</option>
+        <option value="Arquivo">Arquivo</option>
+      </select>
+      <select class="filter-select" id="filter-prog" onchange="applyFilters()">
+        <option value="">Todos os Status</option>
         <option value="0">Não iniciado (0%)</option>
         <option value="25">Iniciado (25%)</option>
         <option value="50">Em andamento (50%)</option>
         <option value="75">Quase concluído (75%)</option>
         <option value="100">Concluído (100%)</option>
       </select>
-      <button class="btn btn-ghost" onclick="resetFilters()">✕ Limpar</button>
+      <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+        <span style="font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap">Início:</span>
+        <input type="date" class="filter-select" id="filter-inicio-from" onchange="applyFilters()" style="width:130px">
+        <span style="font-size:11px;color:var(--text4)">até</span>
+        <input type="date" class="filter-select" id="filter-inicio-to" onchange="applyFilters()" style="width:130px">
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+        <span style="font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap">Fim:</span>
+        <input type="date" class="filter-select" id="filter-fim-from" onchange="applyFilters()" style="width:130px">
+        <span style="font-size:11px;color:var(--text4)">até</span>
+        <input type="date" class="filter-select" id="filter-fim-to" onchange="applyFilters()" style="width:130px">
+      </div>
+      <button class="btn btn-ghost" onclick="resetFilters()" id="btn-clear-filters" style="display:none">✕ Limpar filtros</button>
+    </div>
+    <div id="filter-badge" style="padding:6px 16px;background:linear-gradient(90deg,rgba(27,126,200,.08),rgba(244,121,32,.06));border-radius:8px;margin:0 0 8px;font-size:12px;font-weight:600;color:var(--blue);align-items:center;gap:10px;display:none">
+      <span id="filter-badge-text"></span>
     </div>
     <div class="task-table-wrap">
       <table>
@@ -1091,10 +1121,46 @@ function load(){
 }
 function save(){ localStorage.setItem('vli_v4',JSON.stringify(tasks)); localStorage.setItem('vli_divs',JSON.stringify(divergencias)); localStorage.setItem('vli_last_save',Date.now().toString()); setTimeout(()=>syncToGist(false),300); }
 function active(){ return tasks.filter(t=>!t.hdr); }
+function filteredActive(){
+  const q=(document.getElementById('search-input').value||'').toLowerCase().trim();
+  const fg=document.getElementById('filter-group').value;
+  const fp=document.getElementById('filter-prog').value;
+  const fproc=(document.getElementById('filter-processo')||{value:''}).value;
+  const ftipo=(document.getElementById('filter-tipo')||{value:''}).value;
+  const fiFrom=(document.getElementById('filter-inicio-from')||{value:''}).value;
+  const fiTo=(document.getElementById('filter-inicio-to')||{value:''}).value;
+  const ffFrom=(document.getElementById('filter-fim-from')||{value:''}).value;
+  const ffTo=(document.getElementById('filter-fim-to')||{value:''}).value;
+  return active().filter(t=>{
+    if(q&&!t.title.toLowerCase().includes(q)&&!(t.resp||'').toLowerCase().includes(q)&&!t.item.includes(q)&&!(t.processo||'').toLowerCase().includes(q))return false;
+    if(fg&&String(t.g)!==fg)return false;
+    if(fp!==''&&String(t.prog)!==fp)return false;
+    if(fproc&&(t.processo||'').trim()!==fproc)return false;
+    if(ftipo&&!(t.type||'').toLowerCase().includes(ftipo.toLowerCase()))return false;
+    if(fiFrom&&t.inicio&&t.inicio<fiFrom)return false;
+    if(fiTo&&t.inicio&&t.inicio>fiTo)return false;
+    if(ffFrom&&t.fim&&t.fim<ffFrom)return false;
+    if(ffTo&&t.fim&&t.fim>ffTo)return false;
+    return true;
+  });
+}
+function hasActiveFilters(){
+  const ids=['search-input','filter-group','filter-prog','filter-processo','filter-tipo',
+             'filter-inicio-from','filter-inicio-to','filter-fim-from','filter-fim-to'];
+  return ids.some(id=>{const el=document.getElementById(id);return el&&el.value!=='';});
+}
+function applyFilters(){
+  const active=hasActiveFilters();
+  const btn=document.getElementById('btn-clear-filters');
+  if(btn)btn.style.display=active?'':'none';
+  renderTable();
+  updateKPIs();
+  initCharts();
+}
 
 // ═══ STATS ═══
-function stats(){
-  const a=active();
+function stats(taskList){
+  const a=taskList||active();
   const done=a.filter(t=>t.prog===100).length;
   const wip=a.filter(t=>t.prog>0&&t.prog<100).length;
   const pend=a.filter(t=>t.prog===0).length;
@@ -1150,7 +1216,19 @@ function buildTimeline(){
 
 // ═══ KPIs ═══
 function updateKPIs(){
-  const s=stats(), d=dayInfo();
+  const fa=filteredActive(); const isFiltered=hasActiveFilters();
+  const s=stats(isFiltered?fa:undefined), d=dayInfo();
+  // Update filter badge
+  const badge=document.getElementById('filter-badge');
+  const badgeText=document.getElementById('filter-badge-text');
+  if(badge&&badgeText){
+    if(isFiltered){
+      badge.style.display='flex';
+      const proc=document.getElementById('filter-processo').value;
+      const label=proc?` · ${proc}`:'';
+      badgeText.textContent=`Exibindo ${fa.length} de ${active().length} atividades${label} — Progresso filtrado: ${s.overall}%`;
+    } else { badge.style.display='none'; }
+  }
   document.getElementById('kpi-overall').textContent=s.overall+'%';
   document.getElementById('kpi-overall-sub').textContent=s.done+' tarefas concluídas';
   document.getElementById('kpi-done').textContent=s.done;
@@ -1191,7 +1269,9 @@ function updateRisk(s,d){
 
 // ═══ CHARTS ═══
 function initCharts(){
-  const s=stats(), a=active();
+  const fa=filteredActive(); const isFiltered=hasActiveFilters();
+  const a=isFiltered?fa:active();
+  const s=stats(a);
   Chart.defaults.font.family='Manrope';
   Chart.defaults.color='#7A8FA3';
   const BLUE='#1B7EC8', ORANGE='#F47920', GREEN='#16A34A', AMBER='#D97706', PURPLE='#7C3AED', GRAY='#C8D4E2';
@@ -1260,21 +1340,25 @@ function sortBy(k){
   renderTable();
 }
 function resetFilters(){
-  document.getElementById('search-input').value='';
-  document.getElementById('filter-group').value='';
-  document.getElementById('filter-prog').value='';
-  renderTable();
+  ['search-input','filter-group','filter-prog','filter-processo','filter-tipo',
+   'filter-inicio-from','filter-inicio-to','filter-fim-from','filter-fim-to'].forEach(id=>{
+    const el=document.getElementById(id); if(el)el.value='';
+  });
+  const btn=document.getElementById('btn-clear-filters');
+  if(btn)btn.style.display='none';
+  const badge=document.getElementById('filter-badge');
+  if(badge)badge.style.display='none';
+  applyFilters();
 }
 function renderTable(){
-  const q=(document.getElementById('search-input').value||'').toLowerCase();
   const fg=document.getElementById('filter-group').value;
-  const fp=document.getElementById('filter-prog').value;
+  const fa=filteredActive();
+  const faIds=new Set(fa.map(t=>t.id));
+  // Include header rows for groups that have visible tasks
+  const visibleGs=new Set(fa.map(t=>t.g));
   const filtered=tasks.filter(t=>{
-    if(t.hdr)return true;
-    if(q&&!t.title.toLowerCase().includes(q)&&!(t.resp||'').toLowerCase().includes(q)&&!t.item.includes(q))return false;
-    if(fg&&String(t.g)!==fg)return false;
-    if(fp!==''&&String(t.prog)!==fp)return false;
-    return true;
+    if(t.hdr)return visibleGs.has(t.g)&&(!fg||String(t.g)===fg);
+    return faIds.has(t.id);
   });
   const tbody=document.getElementById('task-tbody');
   tbody.innerHTML='';
@@ -1282,7 +1366,7 @@ function renderTable(){
   filtered.forEach(t=>{
     if(t.hdr){
       if(fg&&String(t.g)!==fg)return;
-      const grpA=active().filter(x=>x.g===t.g);
+      const grpA=fa.filter(x=>x.g===t.g);
       const grpP=grpA.length>0?Math.round(grpA.reduce((s,x)=>s+x.prog,0)/grpA.length):0;
       const lbl=t.g===1?'Pré-requisitos':t.g===2?'Solicitação de Dados':'Execução do Paralelo';
       const tr=document.createElement('tr');tr.className='row-header';
