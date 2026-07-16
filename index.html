@@ -429,14 +429,16 @@ tbody td { padding: 7px 10px; font-size: 12px; color: var(--text2); vertical-ali
 .div-row-click { cursor: pointer; transition: background 0.15s; }
 .div-row-click:hover { background: var(--blue-light) !important; }
 .div-detail-overlay {
-  display: none; position: fixed; inset: 0; background: rgba(10,20,40,0.55);
-  z-index: 9999; align-items: center; justify-content: center;
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(10,20,40,0.65); z-index: 99999;
+  align-items: center; justify-content: center;
 }
-.div-detail-overlay.active { display: flex; }
+.div-detail-overlay.active { display: flex !important; }
 .div-detail-box {
-  background: var(--card); border-radius: 14px; padding: 32px 36px;
+  background: #ffffff; border-radius: 14px; padding: 32px 36px;
   max-width: 720px; width: 95vw; max-height: 88vh; overflow-y: auto;
-  position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  position: relative; box-shadow: 0 24px 72px rgba(0,0,0,0.45);
+  border: 1px solid #e2eaf3;
 }
 .div-detail-close {
   position: absolute; top: 16px; right: 20px; background: none; border: none;
@@ -453,16 +455,16 @@ tbody td { padding: 7px 10px; font-size: 12px; color: var(--text2); vertical-ali
   align-items: start;
 }
 .ddg-label {
-  font-size: 11px; font-weight: 700; color: var(--text3);
+  font-size: 11px; font-weight: 700; color: #64748b;
   text-transform: uppercase; letter-spacing: .06em; padding-top: 2px;
 }
 .ddg-value {
-  font-size: 13px; color: var(--text); line-height: 1.5;
+  font-size: 13px; color: #1a2332; line-height: 1.5;
   word-break: break-word;
 }
 .ddg-value.obs {
-  background: var(--bg); border-radius: 8px; padding: 10px 14px;
-  font-size: 13px; white-space: pre-wrap; border: 1px solid var(--border);
+  background: #f6f8fb; border-radius: 8px; padding: 10px 14px;
+  font-size: 13px; white-space: pre-wrap; border: 1px solid #e2eaf3;
 }
 </style>
 </head>
@@ -1066,7 +1068,24 @@ let macroChart, statusChart, groupChart, projChart;
 const DIVS_DEFAULT=[{"id": 1, "processo": "Benefícios", "status": "Análise LG", "descricao": "Planilhas de associação de benefício", "criadoPor": "LG - Diôgo Lôbo", "dataCriacao": "2026-06-09", "dataFechamento": "2026-07-09", "atendidoPor": "VLI - Thiago", "diagnostico": "Divergências", "observacao": "Planilha foi encaminhada com informações duplicadas"}, {"id": 2, "processo": "Benefícios", "status": "Análise LG", "descricao": "Planilhas de Informações Adicionais titular", "criadoPor": "LG - Diôgo Lôbo", "dataCriacao": "2026-06-09", "dataFechamento": "2026-07-09", "atendidoPor": "VLI - Thiago", "diagnostico": "Divergências", "observacao": "Planilha foi encaminhada com informações duplicadas"}, {"id": 3, "processo": "Benefícios", "status": "Análise LG", "descricao": "Planilhas de Informações Adicionais Dependente", "criadoPor": "LG - Diôgo Lôbo", "dataCriacao": "2026-06-09", "dataFechamento": "2026-07-09", "atendidoPor": "VLI - Thiago", "diagnostico": "Divergências", "observacao": "Planilha foi encaminhada com informações duplicadas"}, {"id": 4, "processo": "Adiantamento Quinzenal", "status": "Aprovado", "descricao": "Inclusão da base de periculosidade no calculo do Adt quinzenal", "criadoPor": "VLI - Julio", "dataCriacao": "2026-07-08", "dataFechamento": "2026-07-08", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi orientado o cliente a fazer o recalculo da folha e revalidação dos calculos."}, {"id": 5, "processo": "Adiantamento Quinzenal", "status": "Aprovado", "descricao": "Carga das informações adicionais dos admitidos após 05/2025", "criadoPor": "LG - Alex", "dataCriacao": "2026-07-07", "dataFechamento": "2026-07-08", "atendidoPor": "LG - Alex", "diagnostico": "Complemto", "observacao": "Complemento de carga cadastral complementar referente aos admitidos após 05/2025"}, {"id": 6, "processo": "Adiantamento Quinzenal", "status": "Reteste", "descricao": "Inclusão da base de vantagem pessoal - Ev 146 no calculo do Adt quinzenal somente para empresa 16", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi incluido o evento 10332 na regra da  formiula de calculo para empresa 16 Adt Salario Ev 1221"}, {"id": 7, "processo": "Férias / Recessos / Férias Coletivas", "status": "Reteste", "descricao": "Inclusão da base de vantagem pessoal - Ev 146  no calculo das Ferias/Fer Venc/Fer Prop somente para empresa 16", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi incluido o evento 10332 na base de calculo dos eventos 10290,10310,10305"}, {"id": 8, "processo": "Rescisão", "status": "Reteste", "descricao": "Inclusão da base de vantagem pessoal - Ev 146 no calculo das Rescisões somente para empresa 16", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi incluido o evento 10332 na base de calculo dos eventos 10300, 10315"}, {"id": 9, "processo": "Adiantamento Quinzenal", "status": "Reteste", "descricao": "Inclusão da base de Acresc. Jornada - Ev 151  no calculo do Adt Salario somente para empresa 93 - Cod estabelecimento", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi incluido o evento 10321 na regra da  formiula de calculo para empresa 16 Adt Salario Ev 1221"}, {"id": 10, "processo": "Férias / Recessos / Férias Coletivas", "status": "Reteste", "descricao": "Inclusão da base de Acresc. Jornada - Ev 151  no calculo das Ferias/Fer Venc/Fer Prop somente para empresa 93 - Cod estabelecimento", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi incluido o evento 10321 na base de calculo dos eventos 10290,10310,10305"}, {"id": 11, "processo": "Rescisão", "status": "Reteste", "descricao": "Inclusão da base de Acresc. Jornada - Ev 151  no calculo das Rescisões somente para empresa 93 - Cod estabelecimento", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Mudança de Regra", "observacao": "Foi incluido o evento 10321 na base de calculo dos eventos 10300, 10315"}, {"id": 12, "processo": "Adiantamento Quinzenal", "status": "Reteste", "descricao": "Ajuste da base de calculo evento 1222 - Pegar valor do evento 1221 e aplicar o percentual da pensão", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Mudança de Regra", "observacao": "Foi alterada a base de calculo passando a considerar o evento 1221 e sendo aplicado o percentual da pensão"}, {"id": 13, "processo": "Adiantamento Quinzenal", "status": "Reteste", "descricao": "Carga complementar informação adicional 20 e 21 para habilitação dos calculos dos colaboradores admitidos após 05/2025", "criadoPor": "VLI - Julio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-14", "atendidoPor": "LG - Alex", "diagnostico": "Complemto", "observacao": "Carga complementar das informções adicionais"}, {"id": 14, "processo": "Adiantamento Quinzenal", "status": "Reteste", "descricao": "Empregados com dias de ferias dobrados para o calculo do Adt Salario", "criadoPor": "VLI - Julio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-14", "atendidoPor": "LG - Alex", "diagnostico": "Divergências", "observacao": "Foi realiada cargar historica do evento 20220 com a quantidade de dias de férias mês seguinte corretos na folha 001"}, {"id": 15, "processo": "Adiantamento Quinzenal", "status": "Chamado Suporte", "descricao": "problema no calculo coletivo.. vários empregados que estava sendo calculado o adt salario, não calculou.. porém no calculo individual calcula", "criadoPor": "LG - Alex", "dataCriacao": "2026-07-15", "dataFechamento": "", "atendidoPor": "Suporte LG", "diagnostico": "Erro produto", "observacao": "Ticket #616979"}, {"id": 16, "processo": "Férias / Recessos / Férias Coletivas", "status": "Pendente", "descricao": "E-mail 15/07/26 18:38 - Conforme conversamos, durante a validação das férias foi identificado o cálculo de férias em dobro na nuvem. Embora a regra esteja aplicada corretamente na nuvem, em conformidade com o que determina a CLT, trataremos estes casos de forma pontual. Dessa forma, solicito a criação de um evento indicativo para inibir esse cálculo.\nOs eventos mapeados na nuvem relacionados ao processo são os seguintes:", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-15", "dataFechamento": "", "atendidoPor": "LG - Alex", "diagnostico": "Mudança de Regra", "observacao": ""}, {"id": 17, "processo": "", "status": "", "descricao": "", "criadoPor": "", "dataCriacao": "", "dataFechamento": "", "atendidoPor": "", "diagnostico": "", "observacao": ""}];
 function load(){
   const s=localStorage.getItem('vli_v4');
-  tasks=s?JSON.parse(s):JSON.parse(JSON.stringify(TASKS_DEFAULT));
+  if(s){
+    tasks=JSON.parse(s);
+    // Merge missing fields from TASKS_DEFAULT (processo, type, new tasks)
+    const defMap={};TASKS_DEFAULT.forEach(t=>{defMap[t.id]=t;});
+    tasks=tasks.map(t=>{
+      const def=defMap[t.id]||{};
+      return Object.assign({},t,{
+        processo:t.processo||def.processo||'',
+        type:t.type||def.type||'',
+        obs:t.obs||def.obs||''
+      });
+    });
+    const existIds=new Set(tasks.map(t=>t.id));
+    TASKS_DEFAULT.forEach(t=>{if(!existIds.has(t.id))tasks.push(JSON.parse(JSON.stringify(t)));});
+    tasks.sort((a,b)=>((a.item||'').localeCompare(b.item||'',undefined,{numeric:true})));
+  } else {
+    tasks=JSON.parse(JSON.stringify(TASKS_DEFAULT));
+  }
   const d=localStorage.getItem('vli_divs');
   divergencias=d?JSON.parse(d):JSON.parse(JSON.stringify(DIVS_DEFAULT));
 }
@@ -1767,7 +1786,27 @@ async function syncFromGistSilent(){
     if(c.tasks&&c.tasks.length>0){
       const localDate=new Date(parseInt(localStorage.getItem('vli_last_save')||'0'));
       const gistDate=new Date(c.lastSync||0);
-      if(gistDate>localDate){tasks=c.tasks;divergencias=(c.divergencias&&c.divergencias.length>0)?c.divergencias:JSON.parse(JSON.stringify(DIVS_DEFAULT));localStorage.setItem('vli_v4',JSON.stringify(tasks));localStorage.setItem('vli_divs',JSON.stringify(divergencias));renderTable();renderDivergencias();updateKPIs();initCharts();toast('Dados atualizados do GitHub ✓','ok');}
+      if(gistDate>localDate){
+      tasks=c.tasks;
+      // Merge processo + tipo from TASKS_DEFAULT (Gist may have old data without these fields)
+      const defMap={};TASKS_DEFAULT.forEach(t=>{defMap[t.id]=t;});
+      tasks=tasks.map(t=>{
+        const def=defMap[t.id]||{};
+        return Object.assign({},t,{
+          processo:t.processo||def.processo||'',
+          type:t.type||def.type||'',
+          obs:t.obs||def.obs||''
+        });
+      });
+      // Add any tasks from TASKS_DEFAULT not in Gist (new sub-items)
+      const gistIds=new Set(tasks.map(t=>t.id));
+      TASKS_DEFAULT.forEach(t=>{if(!gistIds.has(t.id))tasks.push(JSON.parse(JSON.stringify(t)));});
+      tasks.sort((a,b)=>{const ai=a.item||'',bi=b.item||'';return ai.localeCompare(bi,undefined,{numeric:true});});
+      divergencias=(c.divergencias&&c.divergencias.length>0)?c.divergencias:JSON.parse(JSON.stringify(DIVS_DEFAULT));
+      localStorage.setItem('vli_v4',JSON.stringify(tasks));
+      localStorage.setItem('vli_divs',JSON.stringify(divergencias));
+      renderTable();renderDivergencias();updateKPIs();initCharts();toast('Dados atualizados do GitHub ✓','ok');
+    }
     }
     const el=document.getElementById('sync-status');if(el)el.textContent='Sync: '+new Date().toLocaleTimeString('pt-BR');
   }catch(e){}
