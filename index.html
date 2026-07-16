@@ -82,12 +82,16 @@ body {
 @keyframes pulse-live { 0%,100%{opacity:1} 50%{opacity:.6} }
 .hbadge-clock { background: var(--bg2); border-color: var(--border); color: var(--text3); font-size: 12px; }
 .btn-icon {
-  width: 36px; height: 36px; border-radius: var(--r);
+  width: 28px; height: 28px; border-radius: 6px;
   background: var(--bg2); border: 1.5px solid var(--border);
   cursor: pointer; display: grid; place-items: center;
-  color: var(--text3); transition: all .18s; font-size: 15px;
+  color: var(--text3); transition: all .18s; font-size: 13px;
 }
 .btn-icon:hover { background: var(--blue-lt); border-color: var(--blue-md); color: var(--blue); }
+.action-btn { width:26px;height:26px;border-radius:6px;background:var(--bg2);border:1.5px solid var(--border);cursor:pointer;display:inline-grid;place-items:center;color:var(--text3);transition:all .18s;font-size:13px;padding:0; }
+.action-btn:hover { background:var(--blue-lt);border-color:var(--blue-md);color:var(--blue); }
+.action-btn.del:hover { background:#FEE2E2;border-color:#FCA5A5;color:var(--red); }
+.td-date { font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap; }
 /* Grafismo decorativo no header */
 .header-grafismo {
   height: 6px;
@@ -254,8 +258,8 @@ body {
 table { width: 100%; border-collapse: collapse; }
 thead { background: var(--bg2); }
 thead th {
-  padding: 11px 16px; text-align: left;
-  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text3);
+  padding: 7px 10px; text-align: left;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text3);
   border-bottom: 1.5px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none;
 }
 thead th:hover { color: var(--blue); }
@@ -264,9 +268,9 @@ tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; 
 tbody tr:hover { background: var(--blue-lt); }
 tbody tr.row-header { background: var(--bg2); }
 tbody tr.row-header td { font-size: 12px; font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: .04em; }
-tbody td { padding: 11px 16px; font-size: 13px; color: var(--text2); vertical-align: middle; }
-.td-item { font-size: 11px; font-weight: 700; color: var(--blue); min-width: 46px; font-variant-numeric: tabular-nums; }
-.td-title { color: var(--text); max-width: 380px; }
+tbody td { padding: 7px 10px; font-size: 12px; color: var(--text2); vertical-align: middle; }
+.td-item { font-size: 11px; font-weight: 700; color: var(--blue); min-width: 36px; font-variant-numeric: tabular-nums; }
+.td-title { color: var(--text); max-width: 260px; }
 .td-title span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 
 /* CHIP */
@@ -602,11 +606,14 @@ tbody td { padding: 11px 16px; font-size: 13px; color: var(--text2); vertical-al
           <tr>
             <th onclick="sortBy('item')" class="sorted">Item</th>
             <th onclick="sortBy('title')">Atividade</th>
+            <th>Processo</th>
             <th onclick="sortBy('type')">Tipo</th>
             <th onclick="sortBy('responsible')">Responsável</th>
+            <th>Início</th>
+            <th>Fim</th>
             <th onclick="sortBy('progress')">Progresso</th>
-            <th>Evolução</th>
-            <th></th>
+            <th style="text-align:center">%</th>
+            <th style="width:54px"></th>
           </tr>
         </thead>
         <tbody id="task-tbody"></tbody>
@@ -615,6 +622,60 @@ tbody td { padding: 11px 16px; font-size: 13px; color: var(--text2); vertical-al
     <div style="padding:12px 22px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--bg2)">
       <span style="font-size:11px;font-weight:600;color:var(--text3)" id="row-count">—</span>
       <span style="font-size:11px;font-weight:600;color:var(--text4)">Clique nos pontos • para atualizar o progresso da atividade</span>
+    </div>
+  </div>
+
+  <!-- DIVERGÊNCIAS -->
+  <div class="section-label"><span>Controle de Divergências</span></div>
+  <div id="kpi-div-strip" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+    <div class="kpi-card c-blue">
+      <div class="kpi-label">Total de Divergências</div>
+      <div class="kpi-value" id="kdiv-total">0</div>
+      <div class="kpi-sub">registradas</div>
+    </div>
+    <div class="kpi-card c-amber">
+      <div class="kpi-label">Em Aberto</div>
+      <div class="kpi-value" id="kdiv-open">0</div>
+      <div class="kpi-sub">pendente / análise / reteste</div>
+    </div>
+    <div class="kpi-card c-green">
+      <div class="kpi-label">Encerradas</div>
+      <div class="kpi-value" id="kdiv-closed">0</div>
+      <div class="kpi-sub">aprovadas / justificadas</div>
+    </div>
+    <div class="kpi-card c-purple">
+      <div class="kpi-label">Reincidentes</div>
+      <div class="kpi-value" id="kdiv-reinc">0</div>
+      <div class="kpi-sub">requerem atenção</div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-head">
+      <span class="card-title">Divergências · Plano Paralelo</span>
+      <button onclick="openDivModal()" style="display:inline-flex;align-items:center;gap:8px;padding:0 18px;height:36px;background:var(--orange);border:none;border-radius:8px;color:#fff;font-family:var(--font);font-size:12px;font-weight:800;cursor:pointer;letter-spacing:.03em" onmouseover="this.style.background='#D96210'" onmouseout="this.style.background='var(--orange)'">
+        + Nova Divergência
+      </button>
+    </div>
+    <div class="div-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:50px">ID</th>
+            <th>Processo</th>
+            <th>Status</th>
+            <th>Descrição</th>
+            <th>Criado por</th>
+            <th>Dt. Criação</th>
+            <th>Atendido por</th>
+            <th>Diagnóstico</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="div-tbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:12px 22px;border-top:1px solid var(--border);background:var(--bg2)">
+      <span style="font-size:11px;font-weight:600;color:var(--text3)" id="div-count">—</span>
     </div>
   </div>
 
@@ -690,6 +751,32 @@ tbody td { padding: 11px 16px; font-size: 13px; color: var(--text2); vertical-al
         <div class="form-group">
           <label class="form-label">Responsável</label>
           <input class="form-input" id="m-resp" placeholder="Consultor / Usuário...">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Processo</label>
+          <select class="form-select" id="m-processo">
+            <option value="">— Selecione —</option>
+            <option>Adiantamento Quinzenal</option><option>Arquivo Bancário</option>
+            <option>Cálculo Retroativo</option><option>Contábil</option>
+            <option>Férias / Recessos / Férias Coletivas</option><option>Folha Autônomos</option>
+            <option>Folha de Provisões (Férias e 13º Salário)</option><option>Folha Mensal incluindo Pro Labore</option>
+            <option>Provisão de PLR</option><option>Rescisão</option>
+            <option>Rescisão Complementar</option><option>Vale Transporte</option>
+            <option>Benefícios</option><option>Assistência Médica</option>
+            <option>Assistência Odontológica</option><option>Auxílio Creche</option>
+            <option>Seguro de Vida</option><option>Vale Refeição</option>
+            <option>Vale Alimentação</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Início</label>
+          <input class="form-input" type="date" id="m-inicio">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fim</label>
+          <input class="form-input" type="date" id="m-fim">
         </div>
       </div>
       <div class="form-group">
@@ -782,14 +869,17 @@ const TASKS_DEFAULT = [
 ];
 
 // ═══ STATE ═══════════════════════════════════════════
-let tasks=[], sortKey='item', sortDir=1, editId=null, selProg_val=0;
+let tasks=[], divergencias=[], divEditId=null, sortKey='item', sortDir=1, editId=null, selProg_val=0;
 let macroChart, statusChart, groupChart, projChart;
 
+const DIVS_DEFAULT=[{"id": 1, "processo": "Benefícios", "status": "Análise LG", "descricao": "Planilhas de associação de benefício", "criadoPor": "LG - Diôgo Lôbo", "dataCriacao": "2026-06-09", "dataFechamento": "2026-07-09", "atendidoPor": "VLI - Thiago", "diagnostico": "Divergências", "observacao": "Planilha foi encaminhada com informações duplicadas"}, {"id": 2, "processo": "Benefícios", "status": "Análise LG", "descricao": "Planilhas de Informações Adicionais titular", "criadoPor": "LG - Diôgo Lôbo", "dataCriacao": "2026-06-09", "dataFechamento": "2026-07-09", "atendidoPor": "VLI - Thiago", "diagnostico": "Divergências", "observacao": "Planilha foi encaminhada com informações duplicadas"}, {"id": 3, "processo": "Benefícios", "status": "Análise LG", "descricao": "Planilhas de Informações Adicionais Dependente", "criadoPor": "LG - Diôgo Lôbo", "dataCriacao": "2026-06-09", "dataFechamento": "2026-07-09", "atendidoPor": "VLI - Thiago", "diagnostico": "Divergências", "observacao": "Planilha foi encaminhada com informações duplicadas"}, {"id": 4, "processo": "Adiantamento Quinzenal", "status": "Aprovado", "descricao": "Inclusão da base de periculosidade no calculo do Adt quinzenal", "criadoPor": "VLI - Julio", "dataCriacao": "2026-07-08", "dataFechamento": "2026-07-08", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi orientado o cliente a fazer o recalculo da folha e revalidação dos calculos."}, {"id": 5, "processo": "Adiantamento Quinzenal", "status": "Aprovado", "descricao": "Carga das informações adicionais dos admitidos após 05/2025", "criadoPor": "LG - Alex", "dataCriacao": "2026-07-07", "dataFechamento": "2026-07-08", "atendidoPor": "LG - Alex", "diagnostico": "Complemto", "observacao": "Complemento de carga cadastral complementar referente aos admitidos após 05/2025"}, {"id": 6, "processo": "Adiantamento Quinzenal", "status": "Reteste", "descricao": "Inclusão da base de vantagem pessoal - Ev 146 no calculo do Adt quinzenal somente para empresa 16", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi incluido o evento 10332 na regra da  formiula de calculo para empresa 16 Adt Salario Ev 1221"}, {"id": 7, "processo": "Férias / Recessos / Férias Coletivas", "status": "Reteste", "descricao": "Inclusão da base de vantagem pessoal - Ev 146  no calculo das Ferias/Fer Venc/Fer Prop somente para empresa 16", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi incluido o evento 10332 na base de calculo dos eventos 10290,10310,10305"}, {"id": 8, "processo": "Rescisão", "status": "Reteste", "descricao": "Inclusão da base de vantagem pessoal - Ev 146 no calculo das Rescisões somente para empresa 16", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi incluido o evento 10332 na base de calculo dos eventos 10300, 10315"}, {"id": 9, "processo": "Adiantamento Quinzenal", "status": "Reteste", "descricao": "Inclusão da base de Acresc. Jornada - Ev 151  no calculo do Adt Salario somente para empresa 93 - Cod estabelecimento", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi incluido o evento 10321 na regra da  formiula de calculo para empresa 16 Adt Salario Ev 1221"}, {"id": 10, "processo": "Férias / Recessos / Férias Coletivas", "status": "Reteste", "descricao": "Inclusão da base de Acresc. Jornada - Ev 151  no calculo das Ferias/Fer Venc/Fer Prop somente para empresa 93 - Cod estabelecimento", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Parametrização", "observacao": "Foi incluido o evento 10321 na base de calculo dos eventos 10290,10310,10305"}, {"id": 11, "processo": "Rescisão", "status": "Reteste", "descricao": "Inclusão da base de Acresc. Jornada - Ev 151  no calculo das Rescisões somente para empresa 93 - Cod estabelecimento", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Mudança de Regra", "observacao": "Foi incluido o evento 10321 na base de calculo dos eventos 10300, 10315"}, {"id": 12, "processo": "Adiantamento Quinzenal", "status": "Reteste", "descricao": "Ajuste da base de calculo evento 1222 - Pegar valor do evento 1221 e aplicar o percentual da pensão", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-13", "atendidoPor": "LG - Alex", "diagnostico": "Mudança de Regra", "observacao": "Foi alterada a base de calculo passando a considerar o evento 1221 e sendo aplicado o percentual da pensão"}, {"id": 13, "processo": "Adiantamento Quinzenal", "status": "Reteste", "descricao": "Carga complementar informação adicional 20 e 21 para habilitação dos calculos dos colaboradores admitidos após 05/2025", "criadoPor": "VLI - Julio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-14", "atendidoPor": "LG - Alex", "diagnostico": "Complemto", "observacao": "Carga complementar das informções adicionais"}, {"id": 14, "processo": "Adiantamento Quinzenal", "status": "Reteste", "descricao": "Empregados com dias de ferias dobrados para o calculo do Adt Salario", "criadoPor": "VLI - Julio", "dataCriacao": "2026-07-13", "dataFechamento": "2026-07-14", "atendidoPor": "LG - Alex", "diagnostico": "Divergências", "observacao": "Foi realiada cargar historica do evento 20220 com a quantidade de dias de férias mês seguinte corretos na folha 001"}, {"id": 15, "processo": "Adiantamento Quinzenal", "status": "Chamado Suporte", "descricao": "problema no calculo coletivo.. vários empregados que estava sendo calculado o adt salario, não calculou.. porém no calculo individual calcula", "criadoPor": "LG - Alex", "dataCriacao": "2026-07-15", "dataFechamento": "", "atendidoPor": "Suporte LG", "diagnostico": "Erro produto", "observacao": "Ticket #616979"}, {"id": 16, "processo": "Férias / Recessos / Férias Coletivas", "status": "Pendente", "descricao": "E-mail 15/07/26 18:38 - Conforme conversamos, durante a validação das férias foi identificado o cálculo de férias em dobro na nuvem. Embora a regra esteja aplicada corretamente na nuvem, em conformidade com o que determina a CLT, trataremos estes casos de forma pontual. Dessa forma, solicito a criação de um evento indicativo para inibir esse cálculo.\nOs eventos mapeados na nuvem relacionados ao processo são os seguintes:", "criadoPor": "VLI - Acacio", "dataCriacao": "2026-07-15", "dataFechamento": "", "atendidoPor": "LG - Alex", "diagnostico": "Mudança de Regra", "observacao": ""}, {"id": 17, "processo": "", "status": "", "descricao": "", "criadoPor": "", "dataCriacao": "", "dataFechamento": "", "atendidoPor": "", "diagnostico": "", "observacao": ""}];
 function load(){
   const s=localStorage.getItem('vli_v3');
   tasks=s?JSON.parse(s):JSON.parse(JSON.stringify(TASKS_DEFAULT));
+  const d=localStorage.getItem('vli_divs');
+  divergencias=d?JSON.parse(d):JSON.parse(JSON.stringify(DIVS_DEFAULT));
 }
-function save(){ localStorage.setItem('vli_v3',JSON.stringify(tasks)); localStorage.setItem('vli_last_save',Date.now().toString()); setTimeout(()=>syncToGist(false),300); }
+function save(){ localStorage.setItem('vli_v3',JSON.stringify(tasks)); localStorage.setItem('vli_divs',JSON.stringify(divergencias)); localStorage.setItem('vli_last_save',Date.now().toString()); setTimeout(()=>syncToGist(false),300); }
 function active(){ return tasks.filter(t=>!t.hdr); }
 
 // ═══ STATS ═══
@@ -858,6 +948,18 @@ function updateKPIs(){
   document.getElementById('kpi-wip').textContent=s.wip;
   document.getElementById('kpi-days').textContent=d.remaining;
   document.getElementById('kpi-pend').textContent=s.pend;
+  // KPIs Divergências
+  const closed=['Aprovado','Justificado'];
+  const reinc=['Reincidente','Chamado Suporte'];
+  const kdivTotal=divergencias.length;
+  const kdivClosed=divergencias.filter(d=>closed.includes(d.status)).length;
+  const kdivOpen=kdivTotal-kdivClosed;
+  const kdivReinc=divergencias.filter(d=>reinc.includes(d.status)).length;
+  const _e=id=>document.getElementById(id);
+  if(_e('kdiv-total'))_e('kdiv-total').textContent=kdivTotal;
+  if(_e('kdiv-open'))_e('kdiv-open').textContent=kdivOpen;
+  if(_e('kdiv-closed'))_e('kdiv-closed').textContent=kdivClosed;
+  if(_e('kdiv-reinc'))_e('kdiv-reinc').textContent=kdivReinc;
   document.getElementById('macro-pct-label').textContent=s.overall+'%';
   const _bub=document.getElementById('today-prog-bubble');if(_bub)_bub.textContent=s.overall+'%';
   document.getElementById('ms1').textContent=s.done;
@@ -974,7 +1076,7 @@ function renderTable(){
       const grpP=grpA.length>0?Math.round(grpA.reduce((s,x)=>s+x.prog,0)/grpA.length):0;
       const lbl=t.g===1?'Pré-requisitos':t.g===2?'Solicitação de Dados':'Execução do Paralelo';
       const tr=document.createElement('tr');tr.className='row-header';
-      tr.innerHTML=`<td colspan="7" style="padding:12px 16px"><div style="display:flex;align-items:center;gap:12px">
+      tr.innerHTML=`<td colspan="10" style="padding:10px 16px"><div style="display:flex;align-items:center;gap:12px">
         <span style="color:var(--orange);font-size:12px;font-weight:800">${t.item}</span>
         <span>${t.title}</span><span style="font-size:11px;font-weight:600;color:var(--text3)">· ${lbl}</span>
         <span style="flex:1"></span>
@@ -987,14 +1089,18 @@ function renderTable(){
       cnt++;
       const dots=[0,25,50,75,100].map(v=>`<span class="dot ${t.prog===v?'d'+v:''}" onclick="quickProg('${t.id}',${v})" title="${v}%">${v===0?'○':v===100?'✓':v+'%'}</span>`).join('');
       const tr=document.createElement('tr');
+      const fmtDate=s=>{if(!s)return'—';const p=s.split('-');return p.length===3?p[2]+'/'+p[1]:'—';};
       tr.innerHTML=`
         <td class="td-item">${t.item}</td>
         <td class="td-title"><span title="${t.title}">${t.title}</span></td>
+        <td style="font-size:11px;font-weight:600;color:var(--text3);max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${t.processo||''}">${t.processo||'—'}</td>
         <td><span class="chip ${chipClass(t.type)}">${t.type||'—'}</span></td>
-        <td class="td-resp" title="${t.resp||''}">${t.resp||'—'}</td>
+        <td class="td-resp" title="${t.resp||''}" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.resp||'—'}</td>
+        <td class="td-date">${fmtDate(t.inicio)}</td>
+        <td class="td-date">${fmtDate(t.fim)}</td>
         <td class="prog-cell"><div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${t.prog}%;background:${progColor(t.prog)}"></div></div><span class="prog-pct">${t.prog}%</span></div></td>
-        <td><div class="prog-dots">${dots}</div></td>
-        <td style="white-space:nowrap">
+        <td style="text-align:center"><div class="prog-dots" style="justify-content:center">${dots}</div></td>
+        <td style="white-space:nowrap;text-align:right;padding-right:8px">
           <button class="action-btn" onclick="openEdit('${t.id}')" title="Editar">✏</button>
           <button class="action-btn del" onclick="delTask('${t.id}')" title="Excluir">🗑</button>
         </td>`;
@@ -1019,7 +1125,8 @@ function openAddModal(){
   editId=null;selProg_val=0;
   document.getElementById('modal-ttl').textContent='Nova Atividade';
   document.getElementById('m-id').value='';
-  ['m-item','m-title','m-resp','m-obs'].forEach(i=>document.getElementById(i).value='');
+  ['m-item','m-title','m-resp','m-obs','m-inicio','m-fim'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('m-processo').value='';
   document.getElementById('m-type').value='Carga';
   document.getElementById('m-group').value='2';
   selProg(0);
@@ -1036,6 +1143,9 @@ function openEdit(id){
   document.getElementById('m-obs').value=t.obs||'';
   document.getElementById('m-type').value=t.type||'Carga';
   document.getElementById('m-group').value=String(t.g||2);
+  document.getElementById('m-processo').value=t.processo||'';
+  document.getElementById('m-inicio').value=t.inicio||'';
+  document.getElementById('m-fim').value=t.fim||'';
   selProg(t.prog);
   document.getElementById('task-modal').classList.add('open');
 }
@@ -1049,9 +1159,9 @@ function saveTask(){
   if(!title){toast('Informe a descrição','warn');return;}
   if(editId){
     const t=tasks.find(x=>x.id===editId);
-    if(t){t.item=document.getElementById('m-item').value||t.item;t.title=title;t.type=document.getElementById('m-type').value;t.resp=document.getElementById('m-resp').value;t.prog=selProg_val;t.obs=document.getElementById('m-obs').value;t.g=parseInt(document.getElementById('m-group').value);}
+    if(t){t.item=document.getElementById('m-item').value||t.item;t.title=title;t.type=document.getElementById('m-type').value;t.resp=document.getElementById('m-resp').value;t.prog=selProg_val;t.obs=document.getElementById('m-obs').value;t.g=parseInt(document.getElementById('m-group').value);t.processo=document.getElementById('m-processo').value;t.inicio=document.getElementById('m-inicio').value;t.fim=document.getElementById('m-fim').value;}
   } else {
-    const newTask={id:'c_'+Date.now(),item:document.getElementById('m-item').value||'—',g:parseInt(document.getElementById('m-group').value),title,type:document.getElementById('m-type').value,resp:document.getElementById('m-resp').value,prog:selProg_val,obs:document.getElementById('m-obs').value};
+    const newTask={id:'c_'+Date.now(),item:document.getElementById('m-item').value||'—',g:parseInt(document.getElementById('m-group').value),title,type:document.getElementById('m-type').value,resp:document.getElementById('m-resp').value,prog:selProg_val,obs:document.getElementById('m-obs').value,processo:document.getElementById('m-processo').value,inicio:document.getElementById('m-inicio').value,fim:document.getElementById('m-fim').value};
     tasks.push(newTask);
     // Ordenar: headers primeiro no grupo, depois por número de item
     tasks.sort((a,b)=>{
@@ -1090,7 +1200,21 @@ async function runAI(){
     const m=data.content[0].text.match(/\{[\s\S]*\}/);
     if(!m)throw new Error('JSON não encontrado');
     renderAI(JSON.parse(m[0]));
-  }catch(e){document.getElementById('ai-output').innerHTML=`<div style="color:var(--red);font-size:12px;font-weight:600">Erro: ${String(e).substring(0,200)}</div>`;}
+  }catch(e){
+    const msg=String(e);
+    let dica='';
+    if(msg.includes('Failed to fetch')||msg.includes('NetworkError')||msg.includes('fetch'))
+      dica='Possível bloqueio de rede ou firewall corporativo impedindo acesso à API Anthropic.';
+    else if(msg.includes('401'))dica='Chave de API inválida ou revogada.';
+    else if(msg.includes('403'))dica='Acesso negado pela API.';
+    else if(msg.includes('429'))dica='Limite de requisições atingido. Aguarde e tente novamente.';
+    else if(msg.includes('404'))dica='Modelo não encontrado. Entre em contato com o administrador.';
+    document.getElementById('ai-output').innerHTML=`<div style="color:var(--red);font-size:12px;font-weight:600;line-height:1.6">
+      <div>⚠ Erro na análise de IA</div>
+      <div style="font-weight:500;margin-top:4px;color:var(--text2)">${msg.substring(0,300)}</div>
+      ${dica?`<div style="margin-top:8px;padding:8px 12px;background:#FEF3C7;border-radius:6px;color:#92400E;font-weight:600">💡 ${dica}</div>`:''}
+    </div>`;
+  }
   btn.disabled=false;btn.textContent='⚡ Analisar Riscos';
 }
 function renderAI(r){
@@ -1108,21 +1232,95 @@ function renderAI(r){
 }
 
 // ═══ DOWNLOADS ═══
+function getStatusText(prog){
+  if(prog===0)return'Pendente';
+  if(prog===100)return'Finalizado';
+  return'Executando';
+}
 function downloadExcel(){
   const wb=XLSX.utils.book_new();
-  const rows=[['Item','Atividade','Tipo','Responsável','Progresso (%)','Observação']];
-  tasks.forEach(t=>{
-    if(t.hdr)rows.push([t.item,'[ '+t.title+' ]','','','','']);
-    else rows.push([t.item,t.title,t.type,t.resp,t.prog,t.obs||'']);
-  });
-  const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:8},{wch:72},{wch:22},{wch:25},{wch:12},{wch:30}];
-  XLSX.utils.book_append_sheet(wb,ws,'Paralelo VLI');
   const s=stats();
-  const ws2=XLSX.utils.aoa_to_sheet([['Indicador','Valor'],['Progresso Geral',s.overall+'%'],['Concluídas',s.done+'/'+s.total],['Em andamento',s.wip],['Pendentes',s.pend],['Benefícios',s.benefPct+'%'],['Gerado em',new Date().toLocaleString('pt-BR')]]);
-  XLSX.utils.book_append_sheet(wb,ws2,'Resumo');
+  const d=dayInfo();
+
+  // ABA 1 — Painel de Status
+  const procMap={};
+  tasks.filter(t=>!t.hdr).forEach(t=>{
+    const p=t.processo||'Sem Processo';
+    if(!procMap[p])procMap[p]={total:0,pend:0,exec:0,fin:0,divsOpen:0,divsClosed:0};
+    procMap[p].total++;
+    if(t.prog===0)procMap[p].pend++;
+    else if(t.prog===100)procMap[p].fin++;
+    else procMap[p].exec++;
+  });
+  divergencias.forEach(dv=>{
+    const p=dv.processo||'Sem Processo';
+    if(!procMap[p])procMap[p]={total:0,pend:0,exec:0,fin:0,divsOpen:0,divsClosed:0};
+    const closed=['Aprovado','Justificado'];
+    if(closed.includes(dv.status))procMap[p].divsClosed++;
+    else procMap[p].divsOpen++;
+  });
+  const ps1=[['VLI Logística - Painel de Status','','','','','','','','','','','',''],
+    ['','','','Total Previsto','Pendente','Executando','Finalizado','% Pend','% Exec','% Fin','','Diverg. Abertas','Diverg. Encerradas','Desvio','% Progresso']];
+  Object.entries(procMap).forEach(([p,v])=>{
+    const pPend=v.total?+(v.pend/v.total).toFixed(4):0;
+    const pExec=v.total?+(v.exec/v.total).toFixed(4):0;
+    const pFin=v.total?+(v.fin/v.total).toFixed(4):0;
+    ps1.push(['','',p,v.total,v.pend,v.exec,v.fin,pPend,pExec,pFin,'',v.divsOpen,v.divsClosed,+(pFin-1).toFixed(4),pFin]);
+  });
+  const ws1=XLSX.utils.aoa_to_sheet(ps1);
+  ws1['!cols']=[{wch:4},{wch:4},{wch:38},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:4},{wch:16},{wch:18},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Painel de Status');
+
+  // ABA 2 — Plano Paralelo CLIENTE
+  const pp=[['VLI Logística - Plano para o Paralelo','','','','','','','','','','','','',''],
+    ['','','','','Início: 06/07/2026   e   Fim: 24/07/26','','','','','','','Desvio','% Previsto','% Atual'],
+    ['','Item','Atividade','Sub.Item','Tipo de Objeto','Atividades','Início','Fim','Tempo','Responsável','Comentários','Status','% Previsto','% Atual']];
+  tasks.forEach(t=>{
+    if(t.hdr)pp.push(['',t.item,t.title,'','','','','','','','','','','']);
+    else pp.push(['',t.item,'',t.type,t.type,(t.title||'').trim(),t.inicio||'',t.fim||'','',t.resp||'',t.obs||'',getStatusText(t.prog),t.prog===100?1:t.prog/100,(t.prog===100?1:t.prog/100)]);
+  });
+  const ws2=XLSX.utils.aoa_to_sheet(pp);
+  ws2['!cols']=[{wch:3},{wch:8},{wch:20},{wch:18},{wch:22},{wch:60},{wch:12},{wch:12},{wch:8},{wch:30},{wch:30},{wch:12},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Plano Paralelo - CLIENTE');
+
+  // ABA 3 — Controle de Divergências
+  const dc=[['CLIENTE - Acompanhamento Testes Paralelos'],[''],['','Início: 06/07/2026','','','Fim: 24/07/2026'],[''],[''],
+    ['ID','Processo','Status','Descrição do Problema','Criado por','Data da Criação','Data do Fechamento','Atendido por','Diagnóstico Final','Observação Geral']];
+  divergencias.forEach(dv=>{
+    dc.push([dv.id||'',dv.processo||'',dv.status||'',dv.descricao||'',dv.criadoPor||'',dv.dataCriacao||'',dv.dataFechamento||'',dv.atendidoPor||'',dv.diagnostico||'',dv.observacao||'']);
+  });
+  const ws3=XLSX.utils.aoa_to_sheet(dc);
+  ws3['!cols']=[{wch:6},{wch:25},{wch:15},{wch:50},{wch:20},{wch:14},{wch:16},{wch:20},{wch:18},{wch:40}];
+  XLSX.utils.book_append_sheet(wb,ws3,'Controle de Divergências');
+
+  // ABA 4 — Dados_Legenda
+  const leg=[['Status','Descrição Status','','Diagnóstico','Descrição Diagnóstico','','Processo','','% Evolução'],
+    ['Pendente','Quando o cliente lança o item na planilha.','','Nova Regra','Surgiu uma nova regra não informada antes.','','Adiantamento Quinzenal','',0],
+    ['Análise LG','Quando o consultor começa a atender o item.','','Parametrização','Houve erro de parametrização.','','Arquivo Bancário','',0.25],
+    ['Reteste','Quando o consultor devolve para o cliente rever.','','Operacional','Houve erro operacional.','','Cálculo Retroativo','',0.5],
+    ['Validação RD','Quando o cliente pega o item para revalidar.','','Diferente Legado','Sistema legado está parametrizado incorretamente.','','Contábil','',0.75],
+    ['Aprovado','Quando o cliente testou e funcionou corretamente.','','Mudança de Regra','Houve mudança de regra do legado para a Suíte.','','Férias / Recessos / Férias Coletivas','',1],
+    ['Justificado','Quando existe alguma justificativa para a divergência.','','Erro produto','Há um erro de produto impactando nos cálculos.','','Folha Autônomos','',''],
+    ['Reincidente','Quando o cliente fez o reteste e ainda segue com divergência.','','Divergências','Divergência nas informações do processo','','Folha de Provisões (Férias e 13º Salário)','',''],
+    ['Chamado Suporte','','','Complemento','','','Folha Mensal incluindo Pro Labore','',''],
+    ['','','','','','','Provisão de PLR','',''],
+    ['','','','','','','Rescisão','',''],
+    ['','','','','','','Rescisão Complementar','',''],
+    ['','','','','','','Vale Transporte','',''],
+    ['','','','','','','Benefícios','',''],
+    ['','','','','','','Assistência Médica','',''],
+    ['','','','','','','Assistência Odontológica','',''],
+    ['','','','','','','Auxílio Creche','',''],
+    ['','','','','','','Seguro de Vida','',''],
+    ['','','','','','','Vale Refeição','',''],
+    ['','','','','','','Vale Alimentação','',''],
+  ];
+  const ws4=XLSX.utils.aoa_to_sheet(leg);
+  ws4['!cols']=[{wch:16},{wch:50},{wch:4},{wch:18},{wch:52},{wch:4},{wch:38},{wch:4},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws4,'Dados_Legenda');
+
   XLSX.writeFile(wb,'VLI_Paralelo_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.xlsx');
-  toast('Excel exportado!','ok');
+  toast('Excel exportado com 4 abas!','ok');
 }
 function downloadPDF(){
   const{jsPDF}=window.jspdf;
@@ -1190,7 +1388,7 @@ function toast(msg,type='ok'){
 // ═══ GITHUB GIST SYNC ════════════════════════════════════
 async function syncToGist(showToast){
   const key=_decryptedToken||''; if(!key||!GIST_ID)return;
-  const payload={version:2,lastSync:new Date().toISOString(),tasks:JSON.parse(JSON.stringify(tasks))};
+  const payload={version:3,lastSync:new Date().toISOString(),tasks:JSON.parse(JSON.stringify(tasks)),divergencias:JSON.parse(JSON.stringify(divergencias))};
   try{
     const r=await fetch('https://api.github.com/gists/'+GIST_ID,{method:'PATCH',
       headers:{'Authorization':'token '+key,'Content-Type':'application/json','User-Agent':'VLI-Dashboard'},
@@ -1228,14 +1426,101 @@ async function syncFromGistSilent(){
     if(c.tasks&&c.tasks.length>0){
       const localDate=new Date(parseInt(localStorage.getItem('vli_last_save')||'0'));
       const gistDate=new Date(c.lastSync||0);
-      if(gistDate>localDate){tasks=c.tasks;localStorage.setItem('vli_v3',JSON.stringify(tasks));renderTable();updateKPIs();initCharts();toast('Dados atualizados do GitHub ✓','ok');}
+      if(gistDate>localDate){tasks=c.tasks;divergencias=(c.divergencias&&c.divergencias.length>0)?c.divergencias:JSON.parse(JSON.stringify(DIVS_DEFAULT));localStorage.setItem('vli_v3',JSON.stringify(tasks));localStorage.setItem('vli_divs',JSON.stringify(divergencias));renderTable();renderDivergencias();updateKPIs();initCharts();toast('Dados atualizados do GitHub ✓','ok');}
     }
     const el=document.getElementById('sync-status');if(el)el.textContent='Sync: '+new Date().toLocaleTimeString('pt-BR');
   }catch(e){}
 }
+
+// ═══ DIVERGÊNCIAS ════════════════════════════════════════════
+function divBadge(s){
+  const m={'Pendente':'pendente','Análise LG':'analise','Reteste':'reteste',
+    'Validação RD':'validacao','Aprovado':'aprovado','Justificado':'justificado',
+    'Reincidente':'reincidente','Chamado Suporte':'chamado'};
+  return `<span class="badge badge-${m[s]||'pendente'}">${s}</span>`;
+}
+function renderDivergencias(){
+  const tb=document.getElementById('div-tbody');
+  if(!tb)return;
+  tb.innerHTML='';
+  divergencias.forEach((d,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="font-weight:700;color:var(--blue)">${d.id||i+1}</td>
+      <td style="font-size:12px;font-weight:600">${d.processo||'—'}</td>
+      <td>${divBadge(d.status||'Pendente')}</td>
+      <td style="font-size:12px;max-width:240px;white-space:normal">${d.descricao||''}</td>
+      <td style="font-size:11px">${d.criadoPor||''}</td>
+      <td style="font-size:11px;white-space:nowrap">${d.dataCriacao||''}</td>
+      <td style="font-size:11px">${d.atendidoPor||''}</td>
+      <td style="font-size:11px">${d.diagnostico||'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-icon" onclick="openDivEdit(${i})" title="Editar">✎</button>
+        <button class="btn-icon" style="color:var(--red)" onclick="delDiv(${i})" title="Excluir">🗑</button>
+      </td>`;
+    tb.appendChild(tr);
+  });
+  const cnt=document.getElementById('div-count');
+  if(cnt)cnt.textContent=divergencias.length+' divergências registradas';
+}
+function openDivModal(){
+  divEditId=null;
+  document.getElementById('div-modal-ttl').textContent='Nova Divergência';
+  ['d-desc','d-criado','d-atendido','d-obs','d-dtcriacao','d-dtfechamento'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('d-processo').value='';
+  document.getElementById('d-status').value='Pendente';
+  document.getElementById('d-diagnostico').value='';
+  document.getElementById('d-dtcriacao').value=new Date().toISOString().slice(0,10);
+  document.getElementById('div-modal').classList.add('open');
+}
+function openDivEdit(idx){
+  const d=divergencias[idx];
+  divEditId=idx;
+  document.getElementById('div-modal-ttl').textContent='Editar Divergência';
+  document.getElementById('d-id').value=idx;
+  document.getElementById('d-processo').value=d.processo||'';
+  document.getElementById('d-status').value=d.status||'Pendente';
+  document.getElementById('d-desc').value=d.descricao||'';
+  document.getElementById('d-criado').value=d.criadoPor||'';
+  document.getElementById('d-dtcriacao').value=d.dataCriacao||'';
+  document.getElementById('d-dtfechamento').value=d.dataFechamento||'';
+  document.getElementById('d-atendido').value=d.atendidoPor||'';
+  document.getElementById('d-diagnostico').value=d.diagnostico||'';
+  document.getElementById('d-obs').value=d.observacao||'';
+  document.getElementById('div-modal').classList.add('open');
+}
+function closeDivModal(){document.getElementById('div-modal').classList.remove('open');}
+function saveDivergencia(){
+  const desc=document.getElementById('d-desc').value.trim();
+  if(!desc){toast('Informe a descrição','warn');return;}
+  const obj={
+    id: divEditId!==null ? divergencias[divEditId].id : (divergencias.length>0?Math.max(...divergencias.map(d=>d.id||0))+1:1),
+    processo:document.getElementById('d-processo').value,
+    status:document.getElementById('d-status').value,
+    descricao:desc,
+    criadoPor:document.getElementById('d-criado').value,
+    dataCriacao:document.getElementById('d-dtcriacao').value,
+    dataFechamento:document.getElementById('d-dtfechamento').value,
+    atendidoPor:document.getElementById('d-atendido').value,
+    diagnostico:document.getElementById('d-diagnostico').value,
+    observacao:document.getElementById('d-obs').value,
+  };
+  if(divEditId!==null) divergencias[divEditId]=obj;
+  else divergencias.push(obj);
+  save();closeDivModal();renderDivergencias();updateKPIs();
+  toast(divEditId!==null?'Divergência atualizada':'Divergência registrada','ok');
+}
+function delDiv(idx){
+  if(!confirm('Excluir esta divergência?'))return;
+  divergencias.splice(idx,1);
+  save();renderDivergencias();updateKPIs();toast('Divergência excluída','ok');
+}
+
 // ═══ INIT ═══
 document.addEventListener('DOMContentLoaded',()=>{
-  load();buildTimeline();updateKPIs();renderTable();initCharts();tick();
+  // Garantir divergências padrão se localStorage ainda não tem
+  if(!localStorage.getItem('vli_divs')){localStorage.setItem('vli_divs',JSON.stringify(DIVS_DEFAULT));}
+  load();buildTimeline();updateKPIs();renderTable();renderDivergencias();initCharts();tick();
   setInterval(tick,1000);
   document.getElementById('task-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 });
@@ -1301,6 +1586,89 @@ document.addEventListener('DOMContentLoaded',()=>{
   const inp=document.getElementById('pwd-input');if(inp)inp.focus();
 });
 </script>
+
+
+<!-- MODAL DIVERGÊNCIA -->
+<div class="modal-overlay" id="div-modal">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-head">
+      <div class="modal-title" id="div-modal-ttl">Nova Divergência</div>
+      <button class="modal-close" onclick="closeDivModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="d-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Processo</label>
+          <select class="form-select" id="d-processo">
+            <option value="">— Selecione —</option>
+            <option>Adiantamento Quinzenal</option><option>Arquivo Bancário</option>
+            <option>Cálculo Retroativo</option><option>Contábil</option>
+            <option>Férias / Recessos / Férias Coletivas</option><option>Folha Autônomos</option>
+            <option>Folha de Provisões (Férias e 13º Salário)</option><option>Folha Mensal incluindo Pro Labore</option>
+            <option>Provisão de PLR</option><option>Rescisão</option>
+            <option>Rescisão Complementar</option><option>Vale Transporte</option>
+            <option>Benefícios</option><option>Assistência Médica</option>
+            <option>Assistência Odontológica</option><option>Auxílio Creche</option>
+            <option>Seguro de Vida</option><option>Vale Refeição</option>
+            <option>Vale Alimentação</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="d-status">
+            <option>Pendente</option><option>Análise LG</option>
+            <option>Reteste</option><option>Validação RD</option>
+            <option>Aprovado</option><option>Justificado</option>
+            <option>Reincidente</option><option>Chamado Suporte</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição do Problema</label>
+        <textarea class="form-textarea" id="d-desc" placeholder="Descreva a divergência encontrada..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Criado por</label>
+          <input class="form-input" id="d-criado" placeholder="ex: VLI - Julio">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Criação</label>
+          <input class="form-input" type="date" id="d-dtcriacao">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Fechamento</label>
+          <input class="form-input" type="date" id="d-dtfechamento">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Atendido por</label>
+          <input class="form-input" id="d-atendido" placeholder="ex: LG - Alex">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Diagnóstico Final</label>
+          <select class="form-select" id="d-diagnostico">
+            <option value="">— Selecione —</option>
+            <option>Nova Regra</option><option>Parametrização</option>
+            <option>Operacional</option><option>Diferente Legado</option>
+            <option>Mudança de Regra</option><option>Erro produto</option>
+            <option>Divergências</option><option>Complemento</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Observação Geral</label>
+        <textarea class="form-textarea" id="d-obs" placeholder="Observações complementares..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDivModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveDivergencia()">💾 Salvar Divergência</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
