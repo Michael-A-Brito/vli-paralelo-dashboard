@@ -1437,7 +1437,6 @@ function downloadPDF(){
   });
   y+=44;
 
-  // Linha de periodo
   doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,120,140);
   doc.text('Periodo: 06/07/2026 a 24/07/2026  |  Dia '+String(d.elapsed+1)+' de '+String(d.total)+'  |  '+String(d.remaining)+' dias restantes  |  '+String(d.pct)+'% do prazo decorrido',14,y);
   y+=10;
@@ -1447,9 +1446,9 @@ function downloadPDF(){
   const riskLabel=s.overall<40?'RISCO ALTO':s.overall<70?'RISCO MEDIO':'RISCO BAIXO';
   const riskColor=s.overall<40?[220,38,38]:s.overall<70?[245,158,11]:[22,163,74];
   const execLines=[
-    'Situacao geral: '+String(s.done)+' de '+String(s.total)+' atividades concluidas ('+String(s.overall)+'% de progresso). '+String(s.wip)+' atividades em andamento e '+String(s.pend)+' ainda pendentes.',
+    'Situacao geral: '+String(s.done)+' de '+String(s.total)+' atividades concluidas ('+String(s.overall)+'% de progresso). '+String(s.wip)+' em andamento e '+String(s.pend)+' ainda pendentes.',
     'A frente Beneficios registra '+String(s.benefPct)+'% de conclusao, requerendo atencao prioritaria para cumprimento do prazo de 24/07/2026.',
-    'Divergencias abertas: '+String(divsAbertas.length)+' itens ainda em analise, reteste ou aguardando validacao do Responsavel Departamental.'
+    'Divergencias abertas: '+String(divsAbertas.length)+' itens em analise, reteste ou aguardando validacao do Responsavel Departamental.'
   ];
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(26,35,50);
   execLines.forEach(line=>{
@@ -1458,7 +1457,6 @@ function downloadPDF(){
     y+=wrapped.length*5+3;
   });
 
-  // Badge risco
   doc.setFillColor(...riskColor);doc.roundedRect(14,y,46,8,2,2,'F');
   doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');
   doc.text(riskLabel,37,y+5.5,{align:'center'});
@@ -1469,12 +1467,10 @@ function downloadPDF(){
   doc.setTextColor(26,35,50);doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text('Atividades do Paralelo',14,y);
   doc.setFillColor(27,126,200);doc.rect(14,y+1,182,0.6,'F');
   y+=8;
-
   doc.setFillColor(27,126,200);doc.rect(14,y,182,7,'F');
   doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
   doc.text('Item',16,y+5);doc.text('Atividade',28,y+5);doc.text('Responsavel',134,y+5);doc.text('%',191,y+5);
   y+=9;
-
   tasks.filter(t=>!t.hdr).forEach((t,i)=>{
     if(y>275){doc.addPage();y=20;}
     if(i%2===0){doc.setFillColor(246,248,251);doc.rect(14,y-4,182,8,'F');}
@@ -1497,23 +1493,21 @@ function downloadPDF(){
     doc.text('Divergencias Abertas ('+String(divsAbertas.length)+')',14,y);
     doc.setFillColor(244,121,32);doc.rect(14,y+1,182,0.6,'F');
     y+=8;
-
     doc.setFillColor(244,121,32);doc.rect(14,y,182,7,'F');
     doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-    doc.text('Desc.',16,y+5);doc.text('Processo',120,y+5);doc.text('Status',170,y+5);
+    doc.text('Descricao',16,y+5);doc.text('Processo',120,y+5);doc.text('Status',170,y+5);
     y+=9;
-
-    const statusColors={'Pendente':[220,38,38],'Analise LG':[245,158,11],'Reteste':[99,102,241],'Validacao RD':[16,185,129],'Reincidente':[220,38,38],'Chamado Suporte':[220,38,38]};
-    const statusMap={'Analise LG':'Analise LG','Validacao RD':'Valid. RD','Reincidente':'Reincidente','Chamado Suporte':'Chamado'};
+    const sColors={'Pendente':[220,38,38],'Analise LG':[245,158,11],'Reteste':[99,102,241],'Validacao RD':[16,185,129],'Reincidente':[220,38,38],'Chamado Suporte':[220,38,38]};
+    const sMap={'Analise LG':'Analise LG','Validacao RD':'Valid. RD','Reincidente':'Reincidente','Chamado Suporte':'Chamado'};
     divsAbertas.forEach((dv,i)=>{
       if(y>275){doc.addPage();y=20;}
       if(i%2===0){doc.setFillColor(255,248,240);doc.rect(14,y-4,182,8,'F');}
       doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(26,35,50);
       doc.text((dv.descricao||'').substring(0,62),16,y);
       doc.text((dv.processo||'').substring(0,22),120,y);
-      const sc=statusColors[dv.status]||[220,38,38];
+      const sc=sColors[dv.status]||[220,38,38];
       doc.setTextColor(...sc);doc.setFont('helvetica','bold');
-      doc.text(statusMap[dv.status]||dv.status||'',170,y);
+      doc.text(sMap[dv.status]||dv.status||'',170,y);
       doc.setTextColor(26,35,50);doc.setFont('helvetica','normal');
       y+=8;
     });
@@ -1723,4 +1717,108 @@ function doLogin(){
     if(!token.startsWith('ghp_')){
       errEl.textContent='Senha incorreta. Tente novamente.';
       document.getElementById('pwd-input').value='';
-      document.getElementById('p
+      document.getElementById('pwd-input').focus();
+      btn.textContent='Entrar';btn.disabled=false;
+      return;
+    }
+    _decryptedToken=token;
+    _decryptedAiKey=xorDecrypt(ENCRYPTED_AI_KEY,pwd);
+    const ls=document.getElementById('lock-screen');
+    ls.style.transition='opacity .4s';ls.style.opacity='0';
+    setTimeout(()=>{ls.style.display='none';},400);
+    setTimeout(()=>syncFromGistSilent(),800);
+  }catch(e){
+    errEl.textContent='Erro: '+String(e);
+    btn.textContent='Entrar';btn.disabled=false;
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const inp=document.getElementById('pwd-input');if(inp)inp.focus();
+});
+</script>
+
+
+<!-- MODAL DIVERGÊNCIA -->
+<div class="modal-overlay" id="div-modal">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-head">
+      <div class="modal-title" id="div-modal-ttl">Nova Divergência</div>
+      <button class="modal-close" onclick="closeDivModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="d-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Processo</label>
+          <select class="form-select" id="d-processo">
+            <option value="">— Selecione —</option>
+            <option>Adiantamento Quinzenal</option><option>Arquivo Bancário</option>
+            <option>Cálculo Retroativo</option><option>Contábil</option>
+            <option>Férias / Recessos / Férias Coletivas</option><option>Folha Autônomos</option>
+            <option>Folha de Provisões (Férias e 13º Salário)</option><option>Folha Mensal incluindo Pro Labore</option>
+            <option>Provisão de PLR</option><option>Rescisão</option>
+            <option>Rescisão Complementar</option><option>Vale Transporte</option>
+            <option>Benefícios</option><option>Assistência Médica</option>
+            <option>Assistência Odontológica</option><option>Auxílio Creche</option>
+            <option>Seguro de Vida</option><option>Vale Refeição</option>
+            <option>Vale Alimentação</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="d-status">
+            <option>Pendente</option><option>Análise LG</option>
+            <option>Reteste</option><option>Validação RD</option>
+            <option>Aprovado</option><option>Justificado</option>
+            <option>Reincidente</option><option>Chamado Suporte</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição do Problema</label>
+        <textarea class="form-textarea" id="d-desc" placeholder="Descreva a divergência encontrada..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Criado por</label>
+          <input class="form-input" id="d-criado" placeholder="ex: VLI - Julio">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Criação</label>
+          <input class="form-input" type="date" id="d-dtcriacao">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Fechamento</label>
+          <input class="form-input" type="date" id="d-dtfechamento">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Atendido por</label>
+          <input class="form-input" id="d-atendido" placeholder="ex: LG - Alex">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Diagnóstico Final</label>
+          <select class="form-select" id="d-diagnostico">
+            <option value="">— Selecione —</option>
+            <option>Nova Regra</option><option>Parametrização</option>
+            <option>Operacional</option><option>Diferente Legado</option>
+            <option>Mudança de Regra</option><option>Erro produto</option>
+            <option>Divergências</option><option>Complemento</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Observação Geral</label>
+        <textarea class="form-textarea" id="d-obs" placeholder="Observações complementares..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDivModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveDivergencia()">💾 Salvar Divergência</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
