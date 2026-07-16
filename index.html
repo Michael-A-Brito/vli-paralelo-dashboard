@@ -803,7 +803,7 @@ tbody td { padding: 7px 10px; font-size: 12px; color: var(--text2); vertical-ali
 
 <script>
 const GIST_ID='833803c626f116ac05b09f77c2ea177a';
-const ENCRYPTED_TOKEN='3124391f7b5348041b3f04020a044a7c15390b050309784511740f0b7b065c7b177479300b664667';
+const ENCRYPTED_TOKEN='3124391f64417d4c3b221a0d02455c442203212d736a7d430f227a1407044a001f3c78275b547361';
 const ENCRYPTED_AI_KEY='252764215c441f57262579731f5d6b7c057911700100515d10390c0703661f641c7a2a31517c6b4e6e1a78225a631f583a167a0e6d797d5c1b062a3577526d706e2e7e067a7b63402321012a7c52515f1125110b42465c61663c23307574570e393b2e6d7e6546663b1d0801';
 let _decryptedToken=null;
 let _decryptedAiKey=null;
@@ -1184,8 +1184,9 @@ function saveTask(){
 
 // ═══ AI ═══
 async function runAI(){
-  const key=_decryptedAiKey||'';
-  if(!key){toast('Faça login para usar a análise de IA','warn');return;}
+  const ghKey=_decryptedToken||'';
+  const aiKey=_decryptedAiKey||'';
+  if(!ghKey){toast('Faça login para usar a análise de IA','warn');return;}
   const s=stats(),d=dayInfo();
   const benefPend=active().filter(t=>(t.resp||'').includes('Benefícios')&&t.prog===0).map(t=>`[${t.item}] ${t.title}`).join('\n');
   const allPend=active().filter(t=>t.prog<100).slice(0,18).map(t=>`[${t.item}] ${t.title} — ${t.prog}%`).join('\n');
@@ -1193,27 +1194,99 @@ async function runAI(){
   const btn=document.getElementById('ai-btn');
   btn.disabled=true;btn.textContent='⏳ Analisando...';
   document.getElementById('ai-output').innerHTML='<div class="ai-loading"><div class="ai-spinner"></div>Consultando Claude AI — aguarde...</div>';
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1024,messages:[{role:'user',content:prompt}]})});
-    if(!r.ok)throw new Error(await r.text());
-    const data=await r.json();
-    const m=data.content[0].text.match(/\{[\s\S]*\}/);
-    if(!m)throw new Error('JSON não encontrado');
-    renderAI(JSON.parse(m[0]));
-  }catch(e){
-    const msg=String(e);
-    let dica='';
-    if(msg.includes('Failed to fetch')||msg.includes('NetworkError')||msg.includes('fetch'))
-      dica='Possível bloqueio de rede ou firewall corporativo impedindo acesso à API Anthropic.';
-    else if(msg.includes('401'))dica='Chave de API inválida ou revogada.';
-    else if(msg.includes('403'))dica='Acesso negado pela API.';
-    else if(msg.includes('429'))dica='Limite de requisições atingido. Aguarde e tente novamente.';
-    else if(msg.includes('404'))dica='Modelo não encontrado. Entre em contato com o administrador.';
+
+  function showAIError(msg,dica){
     document.getElementById('ai-output').innerHTML=`<div style="color:var(--red);font-size:12px;font-weight:600;line-height:1.6">
       <div>⚠ Erro na análise de IA</div>
       <div style="font-weight:500;margin-top:4px;color:var(--text2)">${msg.substring(0,300)}</div>
       ${dica?`<div style="margin-top:8px;padding:8px 12px;background:#FEF3C7;border-radius:6px;color:#92400E;font-weight:600">💡 ${dica}</div>`:''}
     </div>`;
+  }
+
+  // ── Tentativa 1: API direta (rápido, funciona sem firewall) ─────────────────
+  if(aiKey){
+    try{
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':aiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1024,messages:[{role:'user',content:prompt}]})});
+      if(!r.ok)throw new Error(await r.text());
+      const data=await r.json();
+      const m=data.content[0].text.match(/\{[\s\S]*\}/);
+      if(!m)throw new Error('JSON não encontrado na resposta');
+      renderAI(JSON.parse(m[0]));
+      btn.disabled=false;btn.textContent='⚡ Analisar Riscos';
+      return;
+    }catch(e){
+      const msg=String(e);
+      const isFirewall=msg.includes('Failed to fetch')||msg.includes('NetworkError')||msg.includes('Load failed')||msg.includes('fetch');
+      if(!isFirewall){
+        let dica='';
+        if(msg.includes('401'))dica='Chave de API inválida ou revogada.';
+        else if(msg.includes('403'))dica='Acesso negado pela API.';
+        else if(msg.includes('429'))dica='Limite de requisições atingido. Aguarde e tente novamente.';
+        showAIError(msg,dica);
+        btn.disabled=false;btn.textContent='⚡ Analisar Riscos';
+        return;
+      }
+      // Firewall detectado → redireciona automaticamente para GitHub Actions
+      document.getElementById('ai-output').innerHTML='<div class="ai-loading"><div class="ai-spinner"></div>🔄 Firewall corporativo detectado — roteando via GitHub Actions (~30–60s)...</div>';
+      btn.textContent='⏳ Via GitHub...';
+    }
+  }
+
+  // ── Tentativa 2: GitHub Actions (proxy — funciona em qualquer rede) ──────────
+  try{
+    const reqId=Date.now().toString();
+
+    // Gravar requisição no Gist
+    const wr=await fetch('https://api.github.com/gists/'+GIST_ID,{
+      method:'PATCH',
+      headers:{'Authorization':'token '+ghKey,'Content-Type':'application/json','User-Agent':'VLI-Dashboard'},
+      body:JSON.stringify({files:{'vli_ai_request.json':{content:JSON.stringify({request_id:reqId,prompt,timestamp:new Date().toISOString()})}}})
+    });
+    if(!wr.ok)throw new Error('Erro ao gravar requisição no Gist ('+wr.status+'). Verifique a conexão.');
+
+    // Acionar workflow no GitHub Actions
+    const wfr=await fetch('https://api.github.com/repos/Michael-A-Brito/vli-paralelo-dashboard/actions/workflows/ai-analysis.yml/dispatches',{
+      method:'POST',
+      headers:{'Authorization':'token '+ghKey,'Content-Type':'application/json','User-Agent':'VLI-Dashboard'},
+      body:JSON.stringify({ref:'main',inputs:{request_id:reqId}})
+    });
+    if(!wfr.ok&&wfr.status!==204)throw new Error('Erro ao acionar workflow GitHub Actions ('+wfr.status+'). Execute setup_github_actions_vli.py primeiro.');
+
+    // Aguardar resultado por polling (5s por tentativa, até 3 minutos)
+    await new Promise((resolve,reject)=>{
+      let attempts=0;
+      const iv=setInterval(async()=>{
+        attempts++;
+        const elapsed=attempts*5;
+        document.getElementById('ai-output').innerHTML=`<div class="ai-loading"><div class="ai-spinner"></div>⚙ GitHub Actions executando... (${elapsed}s — aguarde ~45s no total)</div>`;
+        if(attempts>36){clearInterval(iv);reject(new Error('Tempo esgotado (3 min). Tente novamente em alguns instantes.'));return;}
+        try{
+          const gr=await fetch('https://api.github.com/gists/'+GIST_ID,{
+            headers:{'Authorization':'token '+ghKey,'User-Agent':'VLI-Dashboard'}
+          });
+          if(!gr.ok)return;
+          const gist=await gr.json();
+          const rf=gist.files['vli_ai_result.json'];
+          if(rf){
+            const res=JSON.parse(rf.content);
+            if(res.request_id===reqId){
+              clearInterval(iv);
+              if(res.status==='ok')resolve(res.result);
+              else reject(new Error(res.message||'Erro no GitHub Actions. Verifique os logs em github.com/Michael-A-Brito/vli-paralelo-dashboard/actions'));
+            }
+          }
+        }catch(pe){/* ignorar erros transitórios de polling */}
+      },5000);
+    }).then(result=>{
+      renderAI(result);
+    }).catch(e=>{
+      showAIError(String(e),'Se o problema persistir, execute o script setup_github_actions_vli.py novamente.');
+    });
+
+  }catch(e){
+    showAIError(String(e),'Execute o script setup_github_actions_vli.py para configurar o proxy de IA.');
   }
   btn.disabled=false;btn.textContent='⚡ Analisar Riscos';
 }
