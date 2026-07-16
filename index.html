@@ -814,7 +814,7 @@ const TASKS_DEFAULT = [
   {id:'1.2',item:'1.2',g:1,title:'Certificar que houve aprovação da migração de todos os dados.',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
   {id:'1.3',item:'1.3',g:1,title:'Definir o ambiente de execução dos testes (Produção definido).',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
   {id:'1.4',item:'1.4',g:1,title:'Verificar com o Analista se todos os cadastros da competência dos testes estão migrados.',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
-  {id:'1.5',item:'1.5',g:1,title:'Verificar se todos pensionistas estão cadastrados corretamente com percentuais e tipos.',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
+  {id:'1.5',item:'1.5',g:1,title:'Verificar se todos pensionistas estão cadastrados corretamente com percentuais e tipos.',type:'Carga',resp:'Consultor Folha/ Usuário Cliente',prog:100,obs:''},
   {id:'1.6',item:'1.6',g:1,title:'Orientar o cliente quanto à liberação de acessos para todos os usuários participantes.',type:'Análise de dados',resp:'Consultor Folha',prog:100,obs:''},
   {id:'1.7',item:'1.7',g:1,title:'Atualizar faixas de Encargos (INSS, IRRF, Salário mínimo).',type:'Parametrização',resp:'Consultor Folha',prog:100,obs:''},
   {id:'1.8',item:'1.8',g:1,title:'Certificar que todos os POPs da frente de Benefícios (Gen.te Valoriza) estão aprovados e aceitos pelo cliente.',type:'Pré-requisito',resp:'Consultor Benefícios',prog:0,obs:'⚠ CRÍTICO'},
@@ -826,15 +826,15 @@ const TASKS_DEFAULT = [
   {id:'2.3',item:'2.3',g:2,title:'Relação de valores de compras de benefícios — VA, VR (modelo de importação de Valores Mensais).',type:'Planilha',resp:'Usuário Cliente',prog:100,obs:''},
   {id:'2.4',item:'2.4',g:2,title:'Relação de valores de compras de Vale Transporte (modelo de importação de Valores Mensais).',type:'Planilha',resp:'Usuário Cliente',prog:100,obs:''},
   {id:'2.5',item:'2.5',g:2,title:'Relação de dados extraídos do ponto: Horas Extras, Adicional Noturno, Faltas, DSR etc.',type:'Planilha',resp:'Usuário Cliente',prog:100,obs:''},
-  {id:'2.6',item:'2.6',g:2,title:'Provisões (Férias, 13º e outras) do mês anterior ao paralelo para carga dos saldos.',type:'Planilha',resp:'Usuário Cliente',prog:100,obs:''},
+  {id:'2.6',item:'2.6',g:2,title:'Provisões (Férias, 13º e outras) do mês anterior ao paralelo para carga dos saldos.',type:'Planilha',resp:'Usuário Cliente',prog:100,obs:'',inicio:'2026-07-06'},
   {id:'2.7',item:'2.7',g:2,title:'Relação de colaboradores que utilizam Vale Transporte, com quantidade e linhas de transporte.',type:'Planilha',resp:'Usuário Cliente',prog:100,obs:''},
-  {id:'2.8',item:'2.8',g:2,title:'Relação de valores individualizados de Assistência Médica e Odontológica do último ano (Ficha Financeira).',type:'Planilha',resp:'Usuário Cliente',prog:100,obs:''},
-  {id:'2.9',item:'2.9',g:2,title:'Resumo de todas as folhas que serão calculadas no paralelo.',type:'Arquivo',resp:'Usuário Cliente',prog:100,obs:''},
+  {id:'2.8',item:'2.8',g:2,title:'Relação de valores individualizados de Assistência Médica e Odontológica do último ano (Ficha Financeira).',type:'Planilha',resp:'Consultor Folha',prog:100,obs:''},
+  {id:'2.9',item:'2.9',g:2,title:'Resumo de todas as folhas que serão calculadas no paralelo.',type:'Arquivo',resp:'Consultor Benefícios',prog:100,obs:'',inicio:'2026-07-06'},
   {id:'2.10',item:'2.10',g:2,title:'Importar Informações Adicionais utilizadas nos cálculos.',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
   {id:'2.11',item:'2.11',g:2,title:'Importar valores para dar base aos cálculos: Comissões, Gratificações, Saldo FGTS, Empréstimos.',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
-  {id:'2.12',item:'2.12',g:2,title:'Importar valores de compras de benefícios para base dos descontos do mês (ex: Vale Alimentação).',type:'Carga',resp:'Consultor Benefícios',prog:100,obs:''},
+  {id:'2.12',item:'2.12',g:2,title:'Importar valores de compras de benefícios para base dos descontos do mês (ex: Vale Alimentação).',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
   {id:'2.13',item:'2.13',g:2,title:'Importar valores de compras de Vale Transporte para base dos descontos do mês.',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
-  {id:'2.14',item:'2.14',g:2,title:'Importar dados extraídos do ponto que compõem os cálculos.',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
+  {id:'2.14',item:'2.14',g:2,title:'Importar dados extraídos do ponto que compõem os cálculos.',type:'Carga',resp:'Consultor Benefícios',prog:100,obs:'',inicio:'2026-07-06'},
   {id:'2.15',item:'2.15',g:2,title:'Importar saldo de Provisões (Férias, 13º e outras) do mês anterior ao paralelo.',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
   {id:'2.16',item:'2.16',g:2,title:'Associar os colaboradores ao Vale Transporte, com quantidade e linhas de transporte.',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
   {id:'2.17',item:'2.17',g:2,title:'Importar valores individualizados de Assistência Médica e Odontológica do último ano na Ficha Financeira.',type:'Carga',resp:'Consultor Folha',prog:100,obs:''},
@@ -853,17 +853,17 @@ const TASKS_DEFAULT = [
   {id:'2.30',item:'2.30',g:2,title:'Confirmar inclusão de benefícios adicionais no escopo do paralelo.',type:'Validação',resp:'Consultor Benefícios',prog:0,obs:''},
   {id:'2.31',item:'2.31',g:2,title:'Validar e confirmar a Associação de Linhas de Transporte ao Colaborador para a competência do paralelo (marco de aceite).',type:'Validação',resp:'Consultor Folha',prog:0,obs:''},
   {id:'g3',item:'3',g:3,title:'Execução dos Testes Paralelos',type:'Pré-requisitos',resp:'Consultor Folha / Usuário Cliente',prog:0,obs:'',hdr:true},
-  {id:'3.1',item:'3.1',g:3,title:'Testar arquivo bancário geral.',type:'Cálculos / Validações',resp:'Consultor Folha / Usuário Cliente',prog:0,obs:''},
-  {id:'3.2',item:'3.2',g:3,title:'Adiantamento Quinzenal — calcular, validar e gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
-  {id:'3.3',item:'3.3',g:3,title:'Férias / Recessos / Férias Coletivas — calcular, conferir e gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
-  {id:'3.4',item:'3.4',g:3,title:'Benefícios incluindo Vale Transporte (Gen.te Valoriza) — calcular folhas de compra e conferir valores.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
-  {id:'3.5',item:'3.5',g:3,title:'Rescisão — calcular, conferir TRCT, emitir Guia de Seguro Desemprego e gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
-  {id:'3.6',item:'3.6',g:3,title:'Rescisão Complementar — calcular e conferir.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
-  {id:'3.7',item:'3.7',g:3,title:'13º Salário — calcular adiantamento e folha final, emitir DARF e GPS, gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
-  {id:'3.8',item:'3.8',g:3,title:'Folha Autônomos — calcular, conferir e gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
-  {id:'3.9',item:'3.9',g:3,title:'Folha Mensal — calcular, conferir por situação funcional, emitir DARF e GPS, gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
+  {id:'3.1',item:'3.1',g:3,title:'Testar arquivo bancário geral.',type:'Cálculos / Validações',resp:'Consultor Folha / Usuário Cliente (Nome)',prog:0,obs:''},
+  {id:'3.2',item:'3.2',g:3,title:'Adiantamento Quinzenal — calcular, validar e gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Consultor Folha / Usuário Cliente (Nome)',prog:96,obs:'',inicio:'2026-07-07'},
+  {id:'3.3',item:'3.3',g:3,title:'Férias / Recessos / Férias Coletivas — calcular, conferir e gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Consultor Folha / Usuário Cliente (Nome)',prog:0,obs:'',inicio:'2026-07-13'},
+  {id:'3.4',item:'3.4',g:3,title:'Benefícios incluindo Vale Transporte (Gen.te Valoriza) — calcular folhas de compra e conferir valores.',type:'Cálculos / Validações',resp:'Consultor Folha / Usuário Cliente (Nome)',prog:0,obs:'',inicio:'2026-07-13'},
+  {id:'3.5',item:'3.5',g:3,title:'Rescisão — calcular, conferir TRCT, emitir Guia de Seguro Desemprego e gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Consultor Folha / Usuário Cliente (Nome)',prog:0,obs:'',inicio:'2026-07-15'},
+  {id:'3.6',item:'3.6',g:3,title:'Rescisão Complementar — calcular e conferir.',type:'Cálculos / Validações',resp:'Consultor Folha / Usuário Cliente (Nome)',prog:0,obs:'',inicio:'2026-07-15'},
+  {id:'3.7',item:'3.7',g:3,title:'13º Salário — calcular adiantamento e folha final, emitir DARF e GPS, gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Consultor Folha / Usuário Cliente (Nome)',prog:0,obs:'',inicio:'2026-07-15'},
+  {id:'3.8',item:'3.8',g:3,title:'Folha Autônomos — calcular, conferir e gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Consultor Folha / Usuário Cliente (Nome)',prog:0,obs:'',inicio:'2026-07-13'},
+  {id:'3.9',item:'3.9',g:3,title:'Folha Mensal — calcular, conferir por situação funcional, emitir DARF e GPS, gerar arquivo bancário.',type:'Cálculos / Validações',resp:'Consultor Folha / Usuário Cliente (Nome)',prog:0,obs:''},
   {id:'3.10',item:'3.10',g:3,title:'Folha de Provisões (Férias e 13º Salário) — calcular e conferir Resumo Geral.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
-  {id:'3.11',item:'3.11',g:3,title:'Folha de PLR e Provisão de PLR — calcular e conferir.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
+  {id:'3.11',item:'3.11',g:3,title:'Folha de PLR e Provisão de PLR — calcular e conferir.',type:'Cálculos / Validações',resp:'Consultor Folha / Usuário Cliente (Nome)',prog:0,obs:''},
   {id:'3.13',item:'3.13',g:3,title:'Contábil — gerar arquivo contábil de todas as folhas e conferir com sistema anterior.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
   {id:'3.14',item:'3.14',g:3,title:'Anuais — emitir e conferir DIRF e Informe de Rendimentos.',type:'Cálculos / Validações',resp:'Usuário Cliente',prog:0,obs:''},
 ];
@@ -1594,7 +1594,7 @@ function renderDivergencias(){
   if(!tb)return;
   tb.innerHTML='';
   divergencias.forEach((d,i)=>{
-    const tr=document.createElement('tr');
+    const tr=document.createElement('tr');tr.className='div-row-click';tr.onclick=function(e){if(!e.target.closest('button'))openDivDetail(i);};
     tr.innerHTML=`
       <td style="font-weight:700;color:var(--blue)">${d.id||i+1}</td>
       <td style="font-size:12px;font-weight:600">${d.processo||'—'}</td>
@@ -1820,5 +1820,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   </div>
 </div>
 
+
+<!-- Popup detalhe divergência -->
+<div class="div-detail-overlay" id="div-detail-overlay" onclick="if(event.target===this)closeDivDetail()">
+  <div class="div-detail-box">
+    <button class="div-detail-close" onclick="closeDivDetail()">×</button>
+    <h3 id="ddtitle">Divergência</h3>
+    <div class="div-detail-grid" id="ddgrid"></div>
+  </div>
+</div>
 </body>
 </html>
