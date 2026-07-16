@@ -829,20 +829,36 @@ tbody td { padding: 7px 10px; font-size: 12px; color: var(--text2); vertical-ali
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Processo</label>
-          <select class="form-select" id="m-processo">
-            <option value="">— Selecione —</option>
-            <option>Adiantamento Quinzenal</option><option>Arquivo Bancário</option>
-            <option>Cálculo Retroativo</option><option>Contábil</option>
-            <option>Férias / Recessos / Férias Coletivas</option><option>Folha Autônomos</option>
-            <option>Folha de Provisões (Férias e 13º Salário)</option><option>Folha Mensal incluindo Pro Labore</option>
-            <option>Provisão de PLR</option><option>Rescisão</option>
-            <option>Rescisão Complementar</option><option>Vale Transporte</option>
-            <option>Benefícios</option><option>Assistência Médica</option>
-            <option>Assistência Odontológica</option><option>Auxílio Creche</option>
-            <option>Seguro de Vida</option><option>Vale Refeição</option>
-            <option>Vale Alimentação</option>
-          </select>
+          <label class="form-label">Processo <span style="font-size:10px;font-weight:400;color:var(--text4)">(selecione ou digite um novo)</span></label>
+          <input class="form-input" id="m-processo" list="processo-datalist"
+            placeholder="Ex: Folha de Pagamento, Benefícios..." autocomplete="off">
+          <datalist id="processo-datalist">
+            <option value="Folha de Pagamento">
+            <option value="Adiantamento Quinzenal">
+            <option value="Arquivo Bancário">
+            <option value="Cálculo Retroativo">
+            <option value="Contábil">
+            <option value="Férias / Recessos / Férias Coletivas">
+            <option value="Folha Autônomos">
+            <option value="Folha de PLR">
+            <option value="Folha de Provisões (Férias e 13º Salário)">
+            <option value="Folha Mensal incluindo Pro Labore">
+            <option value="Rescisão">
+            <option value="Rescisão Complementar">
+            <option value="Vale Transporte">
+            <option value="Benefícios">
+            <option value="Assistência Médica">
+            <option value="Assistência Odontológica">
+            <option value="Auxílio Creche / Babá">
+            <option value="Seguro de Vida">
+            <option value="Vale Refeição">
+            <option value="Vale Alimentação">
+            <option value="Previdência Privada">
+            <option value="Reembolso Educação">
+            <option value="Reembolso Moradia">
+            <option value="Reembolso Conselho de Classe">
+            <option value="Reembolso Tecnologia Assistiva">
+          </datalist>
         </div>
         <div class="form-group">
           <label class="form-label">Início</label>
@@ -1415,9 +1431,20 @@ function delTask(id){
   tasks=tasks.filter(t=>t.id!==id);
   save();renderTable();updateKPIs();initCharts();toast('Excluído','ok');
 }
+function buildProcessoDatalist(){
+  const dl=document.getElementById('processo-datalist');
+  if(!dl)return;
+  const existing=new Set([...dl.querySelectorAll('option')].map(o=>o.value));
+  tasks.forEach(t=>{
+    if(t.processo&&!existing.has(t.processo)){
+      const opt=document.createElement('option');opt.value=t.processo;dl.appendChild(opt);
+      existing.add(t.processo);
+    }
+  });
+}
 function openAddModal(){
   editId=null;selProg_val=0;
-  document.getElementById('modal-ttl').textContent='Nova Atividade';
+  buildProcessoDatalist();document.getElementById('modal-ttl').textContent='Nova Atividade';
   document.getElementById('m-id').value='';
   ['m-item','m-title','m-resp','m-obs','m-inicio','m-fim'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('m-processo').value='';
@@ -1429,7 +1456,7 @@ function openAddModal(){
 function openEdit(id){
   const t=tasks.find(x=>x.id===id);if(!t)return;
   editId=id;
-  document.getElementById('modal-ttl').textContent='Editar Atividade';
+  buildProcessoDatalist();document.getElementById('modal-ttl').textContent='Editar Atividade';
   document.getElementById('m-id').value=id;
   document.getElementById('m-item').value=t.item;
   document.getElementById('m-title').value=t.title;
