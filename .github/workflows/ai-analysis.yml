@@ -1,0 +1,104 @@
+name: VLI AI Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: 'ID da requisição (timestamp)'
+        required: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Analisar com Claude AI
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GIST_ID: '833803c626f116ac05b09f77c2ea177a'
+          REQUEST_ID: ${{ github.event.inputs.request_id }}
+        run: |
+          python3 << 'PYEOF'
+          import os, json, urllib.request, ssl, datetime
+
+          gist_id = os.environ['GIST_ID']
+          api_key = os.environ['ANTHROPIC_API_KEY']
+          gh_pat  = os.environ['GH_PAT']
+          req_id  = os.environ['REQUEST_ID']
+          ctx = ssl.create_default_context()
+
+          def gh_req(method, url, body=None):
+              headers = {
+                  'Authorization': f'token {gh_pat}',
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'VLI-Dashboard'
+              }
+              req = urllib.request.Request(
+                  url,
+                  data=json.dumps(body).encode() if body else None,
+                  method=method,
+                  headers=headers
+              )
+              with urllib.request.urlopen(req, context=ctx, timeout=30) as r:
+                  return json.loads(r.read())
+
+          # Ler requisição do Gist
+          print(f'Lendo requisição do Gist {gist_id}...')
+          gist = gh_req('GET', f'https://api.github.com/gists/{gist_id}')
+          req_data = json.loads(gist['files']['vli_ai_request.json']['content'])
+
+          if req_data.get('request_id') != req_id:
+              print(f'AVISO: request_id diferente ({req_data.get("request_id")} != {req_id})')
+
+          prompt = req_data['prompt']
+          print(f'Prompt recebido ({len(prompt)} chars). Chamando Anthropic API...')
+
+          # Chamar Anthropic API
+          try:
+              req = urllib.request.Request(
+                  'https://api.anthropic.com/v1/messages',
+                  data=json.dumps({
+                      'model': 'claude-haiku-4-5-20251001',
+                      'max_tokens': 1024,
+                      'messages': [{'role': 'user', 'content': prompt}]
+                  }).encode(),
+                  method='POST',
+                  headers={
+                      'x-api-key': api_key,
+                      'anthropic-version': '2023-06-01',
+                      'content-type': 'application/json'
+                  }
+              )
+              with urllib.request.urlopen(req, context=ctx, timeout=60) as r:
+                  response = json.loads(r.read())
+
+              text = response['content'][0]['text']
+              start = text.find('{')
+              end   = text.rfind('}') + 1
+              result_json = json.loads(text[start:end])
+
+              output = {
+                  'status':     'ok',
+                  'request_id': req_id,
+                  'result':     result_json,
+                  'timestamp':  datetime.datetime.utcnow().isoformat() + 'Z'
+              }
+              print('Análise concluída com sucesso.')
+
+          except Exception as e:
+              print(f'Erro ao chamar Anthropic: {e}')
+              output = {
+                  'status':     'error',
+                  'request_id': req_id,
+                  'message':    str(e),
+                  'timestamp':  datetime.datetime.utcnow().isoformat() + 'Z'
+              }
+
+          # Salvar resultado no Gist
+          print('Salvando resultado no Gist...')
+          gh_req('PATCH', f'https://api.github.com/gists/{gist_id}',
+                 {'files': {'vli_ai_result.json': {'content': json.dumps(output)}}})
+          print(f'Concluído: {output["status"]}')
+          PYEOF
