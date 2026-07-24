@@ -484,7 +484,7 @@ tbody td { padding: 7px 10px; font-size: 12px; color: var(--text2); vertical-ali
     <div class="header-right">
       <span class="hbadge hbadge-live">● Ao Vivo</span>
       <span class="hbadge hbadge-clock" id="clock-badge">--:--:--</span>
-      <span class="hbadge hbadge-blue">06/07 → 24/07/2026</span>
+      <span class="hbadge hbadge-blue">06/07 → 15/08/2026</span>
       <button class="btn-icon" onclick="openAddModal()" title="Adicionar atividade">＋</button>
     </div>
   </div>
@@ -524,7 +524,7 @@ tbody td { padding: 7px 10px; font-size: 12px; color: var(--text2); vertical-ali
     <div class="kpi-card c-amber">
       <div class="kpi-label">Dias Restantes</div>
       <div class="kpi-value" id="kpi-days">—</div>
-      <div class="kpi-sub">até 24/07/2026</div>
+      <div class="kpi-sub">até 15/08/2026</div>
     </div>
     <div class="kpi-card c-purple">
       <div class="kpi-label">Não Iniciadas</div>
@@ -560,14 +560,14 @@ tbody td { padding: 7px 10px; font-size: 12px; color: var(--text2); vertical-ali
 
     <div class="card">
       <div class="card-head">
-        <span class="card-title" style="display:flex;align-items:center;gap:7px"><span style="color:var(--blue);display:flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="14" x2="12.01" y2="14"/></svg></span>Linha do Tempo · 06/07 — 24/07/2026</span>
+        <span class="card-title" style="display:flex;align-items:center;gap:7px"><span style="color:var(--blue);display:flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="14" x2="12.01" y2="14"/></svg></span>Linha do Tempo · 06/07 — 15/08/2026</span>
         <span style="font-size:11px;font-weight:600;color:var(--text3)" id="tl-status-txt"></span>
       </div>
       <div id="timeline-wrap">
         <div class="tl-top">
           <span class="tl-range">06 jul</span>
           <span class="tl-status" id="today-txt">Hoje</span>
-          <span class="tl-range">24 jul</span>
+          <span class="tl-range">15 ago</span>
         </div>
         <div class="rail">
           <div class="rail-fill" id="rail-fill"></div>
@@ -579,7 +579,7 @@ tbody td { padding: 7px 10px; font-size: 12px; color: var(--text2); vertical-ali
         <div class="day-strip" id="day-strip"></div>
         <div class="tl-labels">
           <span class="tl-lbl">06/07</span>
-          <span class="tl-lbl">24/07</span>
+          <span class="tl-lbl">15/08</span>
         </div>
         <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap">
           <span style="font-size:11px;font-weight:600;color:var(--text3);display:flex;align-items:center;gap:6px"><span style="width:12px;height:6px;background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:2px;display:inline-block"></span>Dias passados</span>
@@ -1189,7 +1189,7 @@ function stats(taskList){
 function dayInfo(){
   const now=new Date(); now.setHours(0,0,0,0);
   const start=new Date('2026-07-06');
-  const end=new Date('2026-07-24');
+  const end=new Date('2026-08-15');
   const total=Math.round((end-start)/86400000)+1;
   const elapsed=Math.max(0,Math.round((now-start)/86400000));
   const remaining=Math.max(0,Math.round((end-now)/86400000));
@@ -1277,7 +1277,7 @@ function updateRisk(s,d){
   const b=document.getElementById('risk-banner'); const risks=[];
   if(s.benefPct<50) risks.push({cls:'risk-critical',icon:'🚨',title:'Risco Crítico · Frente Benefícios',desc:`Apenas ${s.benefPct}% das atividades de Benefícios concluídas. POPs, cargas e validações pendentes bloqueiam a execução do paralelo.`});
   if(s.overall<d.pct-15) risks.push({cls:'risk-warning',icon:'⚠',title:'Progresso Abaixo do Esperado',desc:`Progresso geral (${s.overall}%) está ${d.pct-s.overall} pontos abaixo do tempo consumido (${d.pct}% dos dias decorridos).`});
-  if(d.remaining<=5&&s.overall<80) risks.push({cls:'risk-critical',icon:'🔴',title:'Prazo em Risco',desc:`Restam apenas ${d.remaining} dias e o progresso é ${s.overall}%. Alta probabilidade de não conclusão até 24/07.`});
+  if(d.remaining<=5&&s.overall<80) risks.push({cls:'risk-critical',icon:'🔴',title:'Prazo em Risco',desc:`Restam apenas ${d.remaining} dias e o progresso é ${s.overall}%. Alta probabilidade de não conclusão até 15/08.`});
   if(!risks.length){b.style.display='none';return;}
   b.style.display='block';
   b.innerHTML=risks.map(r=>`<div class="risk-item ${r.cls}"><div class="risk-icon">${r.icon}</div><div><div class="risk-title">${r.title}</div><div class="risk-desc">${r.desc}</div></div></div>`).join('');
@@ -1321,8 +1321,8 @@ function initCharts(){
 
   // Projection line
   const d=dayInfo();
-  const labels=['6/Jul','9/Jul','11/Jul','14/Jul','16/Jul','18/Jul','21/Jul','24/Jul'];
-  const ideal=[0,19,33,47,61,71,86,100];
+  const labels=['6/Jul','10/Jul','14/Jul','18/Jul','22/Jul','26/Jul','30/Jul','3/Ago','7/Ago','11/Ago','15/Ago'];
+  const ideal=[0,10,20,30,40,50,60,70,80,90,100];
   const slope=d.pct>0?s.overall/d.pct:0;
   const actual=ideal.map((_,i)=>{const p=(i/(labels.length-1))*100;return p<=d.pct?Math.round(p*slope):null;});
   if(projChart)projChart.destroy();
@@ -1423,7 +1423,7 @@ function renderTable(){
 // ═══ ACTIONS ═══
 function quickProg(id,val){
   const t=tasks.find(x=>x.id===id);if(!t)return;
-  t.prog=val;save();renderTable();updateKPIs();initCharts();
+  t.prog=val;t._ts=Date.now();save();renderTable();updateKPIs();initCharts();
   toast(`${t.item} → ${val}%`,'ok');
 }
 function delTask(id){
@@ -1480,9 +1480,9 @@ function saveTask(){
   if(!title){toast('Informe a descrição','warn');return;}
   if(editId){
     const t=tasks.find(x=>x.id===editId);
-    if(t){t.item=document.getElementById('m-item').value||t.item;t.title=title;t.type=document.getElementById('m-type').value;t.resp=document.getElementById('m-resp').value;t.prog=selProg_val;t.obs=document.getElementById('m-obs').value;t.g=parseInt(document.getElementById('m-group').value);t.processo=document.getElementById('m-processo').value;t.inicio=document.getElementById('m-inicio').value;t.fim=document.getElementById('m-fim').value;}
+    if(t){t.item=document.getElementById('m-item').value||t.item;t.title=title;t.type=document.getElementById('m-type').value;t.resp=document.getElementById('m-resp').value;t.prog=selProg_val;t.obs=document.getElementById('m-obs').value;t.g=parseInt(document.getElementById('m-group').value);t.processo=document.getElementById('m-processo').value;t.inicio=document.getElementById('m-inicio').value;t.fim=document.getElementById('m-fim').value;t._ts=Date.now();}
   } else {
-    const newTask={id:'c_'+Date.now(),item:document.getElementById('m-item').value||'—',g:parseInt(document.getElementById('m-group').value),title,type:document.getElementById('m-type').value,resp:document.getElementById('m-resp').value,prog:selProg_val,obs:document.getElementById('m-obs').value,processo:document.getElementById('m-processo').value,inicio:document.getElementById('m-inicio').value,fim:document.getElementById('m-fim').value};
+    const newTask={id:'c_'+Date.now(),_ts:Date.now(),item:document.getElementById('m-item').value||'—',g:parseInt(document.getElementById('m-group').value),title,type:document.getElementById('m-type').value,resp:document.getElementById('m-resp').value,prog:selProg_val,obs:document.getElementById('m-obs').value,processo:document.getElementById('m-processo').value,inicio:document.getElementById('m-inicio').value,fim:document.getElementById('m-fim').value};
     tasks.push(newTask);
     // Ordenar: headers primeiro no grupo, depois por número de item
     tasks.sort((a,b)=>{
@@ -1511,7 +1511,7 @@ async function runAI(){
   const s=stats(),d=dayInfo();
   const benefPend=active().filter(t=>(t.resp||'').includes('Benefícios')&&t.prog===0).map(t=>`[${t.item}] ${t.title}`).join('\n');
   const allPend=active().filter(t=>t.prog<100).slice(0,18).map(t=>`[${t.item}] ${t.title} — ${t.prog}%`).join('\n');
-  const prompt=`Você é analista sênior de projetos de TI especializado em migração de sistemas de RH e folha de pagamento.\n\nPROJETO: VLI — Migração para Nuvem (HCM 2521437). Etapa atual: Paralelo de Folha.\n\nDADOS EM ${new Date().toLocaleDateString('pt-BR')}:\n- Período: 06/07/2026 a 24/07/2026\n- Dias decorridos: ${d.elapsed}/${d.total} (${d.pct}% do tempo)\n- Dias restantes: ${d.remaining}\n- Progresso: ${s.overall}%\n- Concluídas: ${s.done}/${s.total}\n- Em andamento: ${s.wip} | Pendentes: ${s.pend}\n- Frente Benefícios: ${s.benefPct}%\n\nBENEFÍCIOS PENDENTES (PRIORIDADE):\n${benefPend||'Nenhuma'}\n\nDEMAIS PENDÊNCIAS:\n${allPend}\n\nResponda APENAS em JSON:\n{"riskLevel":"ALTO|MÉDIO|BAIXO","completionProbability":0-100,"summary":"2 frases","deadline":"análise do prazo 24/07 em 2 frases","benefitsRisk":"risco específico frente Benefícios em 2 frases","criticalItems":["item1","item2","item3"],"recommendations":["rec1","rec2","rec3","rec4"]}`;
+  const prompt=`Você é analista sênior de projetos de TI especializado em migração de sistemas de RH e folha de pagamento.\n\nPROJETO: VLI — Migração para Nuvem (HCM 2521437). Etapa atual: Paralelo de Folha.\n\nDADOS EM ${new Date().toLocaleDateString('pt-BR')}:\n- Período: 06/07/2026 a 15/08/2026\n- Dias decorridos: ${d.elapsed}/${d.total} (${d.pct}% do tempo)\n- Dias restantes: ${d.remaining}\n- Progresso: ${s.overall}%\n- Concluídas: ${s.done}/${s.total}\n- Em andamento: ${s.wip} | Pendentes: ${s.pend}\n- Frente Benefícios: ${s.benefPct}%\n\nBENEFÍCIOS PENDENTES (PRIORIDADE):\n${benefPend||'Nenhuma'}\n\nDEMAIS PENDÊNCIAS:\n${allPend}\n\nResponda APENAS em JSON:\n{"riskLevel":"ALTO|MÉDIO|BAIXO","completionProbability":0-100,"summary":"2 frases","deadline":"análise do prazo 15/08 em 2 frases","benefitsRisk":"risco específico frente Benefícios em 2 frases","criticalItems":["item1","item2","item3"],"recommendations":["rec1","rec2","rec3","rec4"]}`;
   const btn=document.getElementById('ai-btn');
   btn.disabled=true;btn.textContent='⏳ Analisando...';
   document.getElementById('ai-output').innerHTML='<div class="ai-loading"><div class="ai-spinner"></div>Consultando Claude AI — aguarde...</div>';
@@ -1617,7 +1617,7 @@ function renderAI(r){
   document.getElementById('ai-output').innerHTML=`<div class="ai-result">
     <h4>Nível de Risco <span class="risk-tag ${tc}">${r.riskLevel}</span> &nbsp;·&nbsp; Probabilidade de conclusão: <span style="color:${pc};font-weight:800">${r.completionProbability}%</span></h4>
     <p>${r.summary}</p>
-    <h4>Viabilidade do Prazo (24/07)</h4><p>${r.deadline}</p>
+    <h4>Viabilidade do Prazo (15/08)</h4><p>${r.deadline}</p>
     <h4>Risco · Frente Benefícios</h4><p>${r.benefitsRisk}</p>
     <h4>Itens Críticos</h4><ul style="margin:4px 0 0 18px">${(r.criticalItems||[]).map(i=>`<li style="margin-bottom:4px">${i}</li>`).join('')}</ul>
     <h4>Recomendações</h4><ul style="margin:4px 0 0 18px">${(r.recommendations||[]).map(i=>`<li style="margin-bottom:4px">${i}</li>`).join('')}</ul>
@@ -1667,7 +1667,7 @@ function downloadExcel(){
 
   // ABA 2 — Plano Paralelo CLIENTE
   const pp=[['VLI Logística - Plano para o Paralelo','','','','','','','','','','','','',''],
-    ['','','','','Início: 06/07/2026   e   Fim: 24/07/26','','','','','','','Desvio','% Previsto','% Atual'],
+    ['','','','','Início: 06/07/2026   e   Fim: 15/08/26','','','','','','','Desvio','% Previsto','% Atual'],
     ['','Item','Atividade','Sub.Item','Tipo de Objeto','Atividades','Início','Fim','Tempo','Responsável','Comentários','Status','% Previsto','% Atual']];
   tasks.forEach(t=>{
     if(t.hdr)pp.push(['',t.item,t.title,'','','','','','','','','','','']);
@@ -1678,7 +1678,7 @@ function downloadExcel(){
   XLSX.utils.book_append_sheet(wb,ws2,'Plano Paralelo - CLIENTE');
 
   // ABA 3 — Controle de Divergências
-  const dc=[['CLIENTE - Acompanhamento Testes Paralelos'],[''],['','Início: 06/07/2026','','','Fim: 24/07/2026'],[''],[''],
+  const dc=[['CLIENTE - Acompanhamento Testes Paralelos'],[''],['','Início: 06/07/2026','','','Fim: 15/08/2026'],[''],[''],
     ['ID','Processo','Status','Descrição do Problema','Criado por','Data da Criação','Data do Fechamento','Atendido por','Diagnóstico Final','Observação Geral']];
   divergencias.forEach(dv=>{
     dc.push([dv.id||'',dv.processo||'',dv.status||'',dv.descricao||'',dv.criadoPor||'',dv.dataCriacao||'',dv.dataFechamento||'',dv.atendidoPor||'',dv.diagnostico||'',dv.observacao||'']);
@@ -1759,7 +1759,7 @@ function downloadPDF(){
   y+=44;
 
   doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,120,140);
-  doc.text('Periodo: 06/07/2026 a 24/07/2026  |  Dia '+String(d.elapsed+1)+' de '+String(d.total)+'  |  '+String(d.remaining)+' dias restantes  |  '+String(d.pct)+'% do prazo decorrido',14,y);
+  doc.text('Periodo: 06/07/2026 a 15/08/2026  |  Dia '+String(d.elapsed+1)+' de '+String(d.total)+'  |  '+String(d.remaining)+' dias restantes  |  '+String(d.pct)+'% do prazo decorrido',14,y);
   y+=10;
 
   // ── Texto executivo ───────────────────────────────────────────────────────
@@ -1768,7 +1768,7 @@ function downloadPDF(){
   const riskColor=s.overall<40?[220,38,38]:s.overall<70?[245,158,11]:[22,163,74];
   const execLines=[
     'Situacao geral: '+String(s.done)+' de '+String(s.total)+' atividades concluidas ('+String(s.overall)+'% de progresso). '+String(s.wip)+' em andamento e '+String(s.pend)+' ainda pendentes.',
-    'A frente Beneficios registra '+String(s.benefPct)+'% de conclusao, requerendo atencao prioritaria para cumprimento do prazo de 24/07/2026.',
+    'A frente Beneficios registra '+String(s.benefPct)+'% de conclusao, requerendo atencao prioritaria para cumprimento do prazo de 15/08/2026.',
     'Divergencias abertas: '+String(divsAbertas.length)+' itens em analise, reteste ou aguardando validacao do Responsavel Departamental.'
   ];
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(26,35,50);
@@ -1859,8 +1859,37 @@ function toast(msg,type='ok'){
 // ═══ GITHUB GIST SYNC ════════════════════════════════════
 async function syncToGist(showToast){
   const key=_decryptedToken||''; if(!key||!GIST_ID)return;
-  const payload={version:3,lastSync:new Date().toISOString(),tasks:JSON.parse(JSON.stringify(tasks)),divergencias:JSON.parse(JSON.stringify(divergencias))};
   try{
+    // 1. Buscar estado atual do Gist para merge antes de gravar
+    const fr=await fetch('https://api.github.com/gists/'+GIST_ID,{headers:{'Authorization':'token '+key,'User-Agent':'VLI-Dashboard'}});
+    if(fr.ok){
+      const fd=await fr.json();
+      try{
+        const fc=JSON.parse(fd.files['vli_dashboard_data.json'].content);
+        if(fc.tasks&&fc.tasks.length>0){
+          // 2. Merge por _ts: manter a versão mais recente de cada tarefa
+          const remMap={};fc.tasks.forEach(t=>{remMap[t.id]=t;});
+          let merged=false;
+          tasks=tasks.map(t=>{
+            const rem=remMap[t.id];
+            if(rem&&(rem._ts||0)>(t._ts||0)){merged=true;return rem;}
+            return t;
+          });
+          // Adicionar tarefas que existem no remoto mas não localmente
+          const locIds=new Set(tasks.map(t=>t.id));
+          fc.tasks.forEach(t=>{if(!locIds.has(t.id)){tasks.push(t);merged=true;}});
+          if(merged){
+            // Preservar processo/type do TASKS_DEFAULT para tarefas sem esses campos
+            const defMap={};TASKS_DEFAULT.forEach(t=>{defMap[t.id]=t;});
+            tasks=tasks.map(t=>{const def=defMap[t.id]||{};return Object.assign({},t,{processo:t.processo||def.processo||'',type:t.type||def.type||'',obs:t.obs||def.obs||''});});
+            localStorage.setItem('vli_v4',JSON.stringify(tasks));
+            renderTable();updateKPIs();initCharts();
+          }
+        }
+      }catch(e2){/* ignora erro de parse do remoto */}
+    }
+    // 3. Publicar estado mesclado no Gist
+    const payload={version:3,lastSync:new Date().toISOString(),tasks:JSON.parse(JSON.stringify(tasks)),divergencias:JSON.parse(JSON.stringify(divergencias))};
     const r=await fetch('https://api.github.com/gists/'+GIST_ID,{method:'PATCH',
       headers:{'Authorization':'token '+key,'Content-Type':'application/json','User-Agent':'VLI-Dashboard'},
       body:JSON.stringify({files:{'vli_dashboard_data.json':{content:JSON.stringify(payload,null,2)}}})
