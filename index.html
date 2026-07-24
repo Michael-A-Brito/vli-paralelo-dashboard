@@ -1399,6 +1399,8 @@ function renderTable(){
       cnt++;
       const dots=[0,25,50,75,100].map(v=>`<span class="dot ${t.prog===v?'d'+v:''}" onclick="quickProg('${t.id}',${v})" title="${v}%">${v===0?'○':v===100?'✓':v+'%'}</span>`).join('');
       const tr=document.createElement('tr');
+      tr.style.cursor='pointer';
+      tr.onclick=function(e){if(!e.target.closest('button')&&!e.target.closest('.dot'))openTaskDetail(t.id);};
       const fmtDate=s=>{if(!s)return'—';const p=s.split('-');return p.length===3?p[2]+'/'+p[1]:'—';};
       tr.innerHTML=`
         <td class="td-item">${t.item}</td>
@@ -2134,6 +2136,44 @@ function closeDivDetail(){
   overlay.classList.remove('active');
   document.body.style.overflow='';
 }
+function openTaskDetail(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  const fmtFull=s=>{if(!s)return'—';const p=s.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:'—';};
+  const grpName=t.g===1?'Pré-requisitos':t.g===2?'Solicitação de Dados':'Execução do Paralelo';
+  const progBar=`<div style="display:flex;align-items:center;gap:10px">
+    <div style="flex:1;height:8px;background:#e8edf4;border-radius:4px;overflow:hidden;max-width:180px">
+      <div style="height:100%;width:${t.prog}%;background:${progColor(t.prog)};border-radius:4px"></div>
+    </div>
+    <span style="font-size:13px;font-weight:700;color:${progColor(t.prog)}">${t.prog}%</span>
+  </div>`;
+  const fields=[
+    ['Item', t.item||'—'],
+    ['Processo', t.processo||'—'],
+    ['Atividade', t.title||'—'],
+    ['Tipo', t.type||'—'],
+    ['Responsável', t.resp||'—'],
+    ['Início', fmtFull(t.inicio)],
+    ['Fim', fmtFull(t.fim)],
+    ['Progresso', '__PROG__'],
+    ['Frente', grpName],
+    ['Observações', t.obs||'—'],
+  ];
+  document.getElementById('tdtitle').textContent=(t.item?t.item+' · ':'')+t.title;
+  document.getElementById('tdgrid').innerHTML=fields.map(([l,v])=>{
+    if(v==='__PROG__') return `<span class="ddg-label">${l}</span><span class="ddg-value">${progBar}</span>`;
+    const isObs=l==='Observações';
+    return `<span class="ddg-label">${l}</span><span class="ddg-value${isObs?' obs':''}">${v}</span>`;
+  }).join('');
+  document.getElementById('td-edit-btn').onclick=function(){closeTaskDetail();openEdit(id);};
+  const overlay=document.getElementById('task-detail-overlay');
+  overlay.classList.add('active');
+  document.body.style.overflow='hidden';
+}
+function closeTaskDetail(){
+  const overlay=document.getElementById('task-detail-overlay');
+  overlay.classList.remove('active');
+  document.body.style.overflow='';
+}
 </script>
 
 
@@ -2221,6 +2261,17 @@ function closeDivDetail(){
 
 
 <!-- Popup detalhe divergência -->
+<div class="div-detail-overlay" id="task-detail-overlay" onclick="if(event.target===this)closeTaskDetail()">
+  <div class="div-detail-box">
+    <button class="div-detail-close" onclick="closeTaskDetail()">×</button>
+    <h3 id="tdtitle">Atividade</h3>
+    <div class="div-detail-grid" id="tdgrid"></div>
+    <div style="margin-top:24px;padding-top:18px;border-top:1px solid #e2eaf3;display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn" onclick="closeTaskDetail()" style="background:var(--bg2);color:var(--text);border:1px solid var(--border)">Fechar</button>
+      <button class="btn btn-primary" id="td-edit-btn">✏ Editar Atividade</button>
+    </div>
+  </div>
+</div>
 <div class="div-detail-overlay" id="div-detail-overlay" onclick="if(event.target===this)closeDivDetail()">
   <div class="div-detail-box">
     <button class="div-detail-close" onclick="closeDivDetail()">×</button>
