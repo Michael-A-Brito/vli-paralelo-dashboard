@@ -1383,16 +1383,48 @@ function renderTable(){
     if(t.hdr){
       if(fg&&String(t.g)!==fg)return;
       const grpA=fa.filter(x=>x.g===t.g);
-      const grpP=grpA.length>0?Math.round(grpA.reduce((s,x)=>s+x.prog,0)/grpA.length):0;
+      const grpTotal=grpA.length;
+      const grpDone=grpA.filter(x=>x.prog===100).length;
+      const grpWip=grpA.filter(x=>x.prog>0&&x.prog<100).length;
+      const grpPend=grpA.filter(x=>x.prog===0).length;
+      const grpP=grpTotal>0?Math.round(grpA.reduce((s,x)=>s+x.prog,0)/grpTotal):0;
+      const pctDone=grpTotal>0?Math.round(grpDone/grpTotal*100):0;
+      const pctWip=grpTotal>0?Math.round(grpWip/grpTotal*100):0;
+      const pctPend=grpTotal>0?Math.round(grpPend/grpTotal*100):0;
       const lbl=t.g===1?'Pré-requisitos':t.g===2?'Solicitação de Dados':'Execução do Paralelo';
       const tr=document.createElement('tr');tr.className='row-header';
-      tr.innerHTML=`<td colspan="10" style="padding:10px 16px"><div style="display:flex;align-items:center;gap:12px">
+      tr.innerHTML=`<td colspan="10" style="padding:10px 16px"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <span style="color:var(--orange);font-size:12px;font-weight:800">${t.item}</span>
         <span>${t.title}</span><span style="font-size:11px;font-weight:600;color:var(--text3)">· ${lbl}</span>
         <span style="flex:1"></span>
-        <div style="display:flex;align-items:center;gap:8px;min-width:110px">
-          <div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${grpP}%;background:${progColor(grpP===100?100:grpP>75?75:grpP>50?50:grpP>25?25:0)};border-radius:3px;transition:width .5s"></div></div>
-          <span style="font-size:11px;font-weight:700;color:var(--text3);width:30px;text-align:right">${grpP}%</span>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="font-size:11px;font-weight:600;color:var(--text3)" title="Total de atividades">
+            <span style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-right:3px">Total</span>
+            <span style="font-weight:800;color:var(--text)">${grpTotal}</span>
+          </span>
+          <span style="width:1px;height:14px;background:var(--border);display:inline-block"></span>
+          <span style="font-size:11px;font-weight:600;color:#16a34a" title="Concluídas">
+            <span style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-right:3px">✓ Concluídas</span>
+            <span style="font-weight:800">${grpDone}</span>
+            <span style="font-size:10px;color:#16a34a;margin-left:2px">${pctDone}%</span>
+          </span>
+          <span style="width:1px;height:14px;background:var(--border);display:inline-block"></span>
+          <span style="font-size:11px;font-weight:600;color:var(--blue)" title="Em andamento">
+            <span style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-right:3px">▶ Andamento</span>
+            <span style="font-weight:800">${grpWip}</span>
+            <span style="font-size:10px;color:var(--blue);margin-left:2px">${pctWip}%</span>
+          </span>
+          <span style="width:1px;height:14px;background:var(--border);display:inline-block"></span>
+          <span style="font-size:11px;font-weight:600;color:var(--text3)" title="Não iniciadas">
+            <span style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-right:3px">○ Pendentes</span>
+            <span style="font-weight:800">${grpPend}</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:2px">${pctPend}%</span>
+          </span>
+          <span style="width:1px;height:14px;background:var(--border);display:inline-block"></span>
+          <div style="display:flex;align-items:center;gap:8px;min-width:110px">
+            <div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${grpP}%;background:${progColor(grpP===100?100:grpP>75?75:grpP>50?50:grpP>25?25:0)};border-radius:3px;transition:width .5s"></div></div>
+            <span style="font-size:11px;font-weight:700;color:var(--text3);width:30px;text-align:right">${grpP}%</span>
+          </div>
         </div></div></td>`;
       tbody.appendChild(tr);
     } else {
