@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VLI · Fluxo Paralelo 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --blue:#1B7EC8;--orange:#F47920;--green:#16A34A;--red:#DC2626;--yellow:#D97706;
+  --bg:#F4F7FB;--bg2:#EEF2F8;--card:#fff;--border:#DDE4EE;
+  --text1:#1A2332;--text2:#3A4D65;--text3:#6B7E95;--text4:#9AADC2;
+  --font:'Manrope',sans-serif;--radius:12px;--shadow:0 2px 12px rgba(27,126,200,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);font-size:13px}
+.topbar{background:#fff;border-bottom:1.5px solid var(--border);padding:0 24px;height:54px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 8px rgba(0,0,0,.06)}
+.project-name{font-size:13px;font-weight:700;color:var(--text2);flex:1}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+#app{display:none}
+.card{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border);box-shadow:var(--shadow)}
+.card-head{padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.card-title{font-size:13px;font-weight:700;color:var(--text2)}
+.card-body{padding:16px 20px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border);padding:14px 18px;box-shadow:var(--shadow)}
+.kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px}
+.kpi-val{font-size:28px;font-weight:800;color:var(--text1);line-height:1}
+.kpi-sub{font-size:11px;font-weight:600;color:var(--text3);margin-top:4px}
+.pipeline-wrap{overflow-x:auto;padding:4px 0 10px}
+.pipeline{display:flex;align-items:center;gap:0;min-width:max-content}
+.pipe-step{display:flex;align-items:center}
+.pipe-node{padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:transform .15s;min-width:100px;text-align:center}
+.pipe-node:hover{transform:translateY(-2px)}
+.pipe-node.done{background:#DCFCE7;border:1.5px solid #16A34A;color:#15803D}
+.pipe-node.wip{background:#FEF3C7;border:1.5px solid #D97706;color:#92400E}
+.pipe-node.pend{background:var(--bg2);border:1.5px solid var(--border);color:var(--text3)}
+.pipe-node .pipe-pct{font-size:16px;font-weight:800;display:block;line-height:1.1}
+.pipe-node .pipe-name{font-size:9px;font-weight:600;display:block;margin-top:2px;opacity:.8;max-width:90px;line-height:1.2}
+.pipe-arrow{color:var(--border);font-size:16px;margin:0 2px;flex-shrink:0}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.chart-wrap{position:relative;height:200px}
+.section-label{display:flex;align-items:center;gap:8px;margin:20px 0 10px}
+.section-label span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.section-label::after{content:'';flex:1;height:1.5px;background:var(--border)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.filter-input,.filter-select{height:34px;border:1.5px solid var(--border);border-radius:8px;padding:0 12px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--text2);background:#fff;outline:none;transition:border-color .18s}
+.filter-input:focus,.filter-select:focus{border-color:var(--blue)}
+.task-table-wrap{overflow-x:auto;border-radius:var(--radius);border:1.5px solid var(--border);background:#fff}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--bg2);padding:9px 12px;font-weight:700;color:var(--text3);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;cursor:pointer;user-select:none}
+td{padding:8px 12px;border-top:1px solid var(--bg2);vertical-align:middle}
+tr.task-row:hover{background:#F7F9FC}
+tr.task-row{cursor:pointer}
+tr.grp-hdr td{background:linear-gradient(90deg,rgba(27,126,200,.06),rgba(244,121,32,.04));font-weight:800;font-size:12px;color:var(--text1)}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.btn{height:30px;padding:0 14px;border-radius:8px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--text2);transition:all .15s}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:#1568A8;border-color:#1568A8;color:#fff}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--text3)}
+.btn-ghost:hover{background:var(--bg2);color:var(--text2);border-color:var(--border)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,30,50,.45);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:16px;padding:28px 32px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.22)}
+.modal-box h3{font-size:16px;font-weight:800;color:var(--text1);margin-bottom:20px}
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:5px}
+.form-row input,.form-row select,.form-row textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-family:var(--font);font-size:13px;font-weight:600;color:var(--text1);outline:none}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--blue)}
+.form-row textarea{min-height:70px;resize:vertical}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.td-overlay{display:none;position:fixed;inset:0;background:rgba(20,30,50,.45);z-index:300;align-items:center;justify-content:center}
+.td-overlay.open{display:flex}
+.td-box{background:#fff;border-radius:16px;padding:28px 32px;width:540px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.22);position:relative}
+.td-close{position:absolute;top:14px;right:18px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3)}
+.td-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.td-field{padding:10px 14px;background:var(--bg2);border-radius:8px}
+.td-field-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:4px}
+.td-field-val{font-size:13px;font-weight:600;color:var(--text1)}
+.td-field.full{grid-column:1/-1}
+.act-entry{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg2)}
+.act-entry:last-child{border-bottom:none}
+.act-icon{font-size:18px;flex-shrink:0;width:28px;text-align:center;margin-top:2px}
+.act-body{flex:1}
+.act-title{font-size:12px;font-weight:700;color:var(--text1)}
+.act-detail{font-size:11px;font-weight:600;color:var(--text3);margin-top:2px}
+.act-time{font-size:10px;color:var(--text4);font-weight:600}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:#1A2332;color:#fff;border-radius:10px;padding:10px 22px;font-size:12px;font-weight:700;z-index:9999;opacity:0;transition:all .3s;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{background:#16A34A}
+#toast.warn{background:#D97706}
+@media(max-width:700px){.charts-row{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div id="lock-screen" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0a1628 0%,#1B7EC8 60%,#F47920 100%);display:flex;align-items:center;justify-content:center;font-family:'Manrope',sans-serif">
+  <div style="background:rgba(255,255,255,.97);border-radius:20px;padding:44px 48px;width:380px;box-shadow:0 32px 80px rgba(0,0,0,.35);text-align:center">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#7A8FA3;margin-bottom:6px">Dashboard Restrito</div>
+    <div style="font-size:18px;font-weight:800;color:#1A2332;margin-bottom:4px">Fluxo Paralelo 2026</div>
+    <div style="font-size:12px;color:#7A8FA3;font-weight:500;margin-bottom:28px">Migração Nuvem · HCM 2521437</div>
+    <div style="position:relative;margin-bottom:14px">
+      <input id="pwd-input" type="password" placeholder="Digite a senha de acesso"
+        style="width:100%;height:46px;padding:0 46px 0 16px;border:2px solid #DDE3EC;border-radius:10px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;outline:none;color:#1A2332;background:#F6F8FB;box-sizing:border-box"
+        onfocus="this.style.borderColor='#1B7EC8'" onblur="this.style.borderColor='#DDE3EC'"
+        onkeydown="if(event.key==='Enter')doLogin()">
+      <span onclick="const i=document.getElementById('pwd-input');i.type=i.type==='password'?'text':'password'"
+        style="position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;color:#A8BAC8;font-size:16px">&#128065;</span>
+    </div>
+    <div id="pwd-error" style="color:#DC2626;font-size:12px;font-weight:600;margin-bottom:10px;min-height:18px"></div>
+    <button onclick="doLogin()"
+      style="width:100%;height:46px;background:#1B7EC8;border:none;border-radius:10px;color:#fff;font-family:'Manrope',sans-serif;font-size:14px;font-weight:800;cursor:pointer"
+      onmouseover="this.style.background='#1568A8'" onmouseout="this.style.background='#1B7EC8'">Entrar</button>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #EEF2F7;font-size:10px;font-weight:600;color:#A8BAC8;text-transform:uppercase;letter-spacing:.06em">VLI · Documento Confidencial</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div style="width:10px;height:36px;background:linear-gradient(180deg,#1B7EC8,#F47920);border-radius:4px;flex-shrink:0"></div>
+    <div class="project-name">VLI · Dashboard Fluxo Paralelo 2026</div>
+    <div class="topbar-actions">
+      <span id="sync-status" style="font-size:10px;color:var(--text4);font-weight:600"></span>
+      <button class="btn" onclick="syncToGist(true)">&#8593; Salvar</button>
+      <button class="btn" onclick="syncFromGist()">&#8595; Restaurar</button>
+      <button class="btn btn-primary" onclick="openModal(null)">+ Nova Atividade</button>
+      <button class="btn" onclick="downloadPDF()">&#8595; PDF</button>
+      <button class="btn" onclick="downloadExcel()">&#8595; Excel</button>
+    </div>
+  </div>
+
+  <div style="max-width:1400px;margin:0 auto;padding:20px 24px 60px">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Progresso Geral</div><div class="kpi-val" id="kpi-overall">—</div><div class="kpi-sub" id="kpi-overall-sub"></div></div>
+      <div class="kpi"><div class="kpi-label">Concluídas</div><div class="kpi-val" id="kpi-done" style="color:var(--green)">—</div><div class="kpi-sub" id="kpi-done-sub"></div></div>
+      <div class="kpi"><div class="kpi-label">Em Andamento</div><div class="kpi-val" id="kpi-wip" style="color:var(--orange)">—</div><div class="kpi-sub" id="kpi-wip-sub"></div></div>
+      <div class="kpi"><div class="kpi-label">Não Iniciadas</div><div class="kpi-val" id="kpi-pend" style="color:var(--text3)">—</div><div class="kpi-sub" id="kpi-pend-sub"></div></div>
+      <div class="kpi"><div class="kpi-label">Etapa Atual</div><div class="kpi-val" id="kpi-etapa" style="color:var(--blue);font-size:20px">—</div><div class="kpi-sub" id="kpi-etapa-sub"></div></div>
+      <div class="kpi"><div class="kpi-label">Etapas Concluídas</div><div class="kpi-val" id="kpi-etapas-done" style="color:var(--green)">—</div><div class="kpi-sub">de 14</div></div>
+    </div>
+
+    <div class="section-label"><span>Fluxo de Etapas</span></div>
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-body" style="padding:16px 20px">
+        <div class="pipeline-wrap"><div class="pipeline" id="pipeline-row"></div></div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-head"><span class="card-title">Progresso por Etapa</span></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="etapaChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Distribuição por Status</span></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="statusChart"></canvas></div></div>
+      </div>
+    </div>
+
+    <div class="section-label"><span>Atividades</span></div>
+    <div class="filters">
+      <input class="filter-input" type="text" id="search-input" placeholder="&#128269;  Buscar atividade..." oninput="applyFilters()" style="min-width:220px;flex:2">
+      <select class="filter-select" id="filter-etapa" onchange="applyFilters()">
+        <option value="">Todas as Etapas</option>
+        <option value="1">1 – Preparação Cutover</option>
+        <option value="2">2 – Migração</option>
+        <option value="3">3 – Atualização ambiente</option>
+        <option value="4">4 – Folha férias 1ª quinzena</option>
+        <option value="5">5 – Folha adiantamento salário</option>
+        <option value="6">6 – Folha férias 2ª quinzena</option>
+        <option value="7">7 – Folha Vale transporte</option>
+        <option value="8">8 – Folha adiantamento</option>
+        <option value="9">9 – Folha Rescisão</option>
+        <option value="10">10 – Folha mensal / Benefícios</option>
+        <option value="11">11 – Folha Diretores</option>
+        <option value="12">12 – Folha provisões</option>
+        <option value="13">13 – Contábil</option>
+        <option value="14">14 – Financeiro</option>
+      </select>
+      <div class="filter-select" id="filter-prog-wrap" style="position:relative;cursor:pointer;user-select:none;min-width:180px" onclick="toggleProgDropdown(event)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span id="filter-prog-label" style="font-size:12px;font-weight:600;color:var(--text3)">Todos os Status</span>
+          <span style="font-size:9px;color:var(--text4);flex-shrink:0">&#9660;</span>
+        </div>
+        <div id="filter-prog-panel" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.13);z-index:200;min-width:200px;padding:6px 0">
+          <label style="display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2)" onclick="event.stopPropagation()"><input type="checkbox" value="0" id="fpchk0" onchange="toggleProgFilter(this)" style="accent-color:var(--blue);width:14px;height:14px"> Não iniciado (0%)</label>
+          <label style="display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2)" onclick="event.stopPropagation()"><input type="checkbox" value="25" id="fpchk25" onchange="toggleProgFilter(this)" style="accent-color:var(--blue);width:14px;height:14px"> Iniciado (25%)</label>
+          <label style="display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2)" onclick="event.stopPropagation()"><input type="checkbox" value="50" id="fpchk50" onchange="toggleProgFilter(this)" style="accent-color:var(--blue);width:14px;height:14px"> Em andamento (50%)</label>
+          <label style="display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2)" onclick="event.stopPropagation()"><input type="checkbox" value="75" id="fpchk75" onchange="toggleProgFilter(this)" style="accent-color:var(--blue);width:14px;height:14px"> Quase concluído (75%)</label>
+          <label style="display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2)" onclick="event.stopPropagation()"><input type="checkbox" value="100" id="fpchk100" onchange="toggleProgFilter(this)" style="accent-color:var(--blue);width:14px;height:14px"> Concluído (100%)</label>
+          <div style="border-top:1px solid var(--border);margin:5px 0 0"></div>
+          <div style="padding:6px 10px"><button class="btn btn-ghost" style="width:100%;font-size:11px" onclick="event.stopPropagation();clearProgFilter()">Limpar seleção</button></div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="resetFilters()" id="btn-clear-filters" style="display:none">&#10005; Limpar filtros</button>
+    </div>
+    <div id="filter-badge" style="padding:6px 16px;background:linear-gradient(90deg,rgba(27,126,200,.08),rgba(244,121,32,.06));border-radius:8px;margin:0 0 8px;font-size:12px;font-weight:600;color:var(--blue);display:none">
+      <span id="filter-badge-text"></span>
+    </div>
+
+    <div class="task-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('id')" style="width:80px">Item</th>
+            <th onclick="sortBy('title')">Atividade</th>
+            <th onclick="sortBy('prog')" style="width:130px">Status</th>
+            <th style="width:110px;text-align:center">Prog.</th>
+            <th style="width:50px"></th>
+          </tr>
+        </thead>
+        <tbody id="task-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="section-label" style="margin-top:32px"><span>Histórico de Ações</span></div>
+    <div class="card" style="margin-bottom:32px">
+      <div class="card-head">
+        <span class="card-title">&#128339; Últimas Ações Registradas</span>
+        <button class="btn" onclick="if(confirm('Limpar histórico local?')){activityLog=[];localStorage.removeItem('vli_fluxo_log');renderActivityLog();}" style="font-size:11px;padding:4px 12px;background:var(--bg2);color:var(--text3);border:1px solid var(--border)">Limpar</button>
+      </div>
+      <div class="card-body" style="padding:0 20px">
+        <div id="activity-log-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="task-modal">
+  <div class="modal-box">
+    <h3 id="modal-title">Nova Atividade</h3>
+    <div class="form-row"><label>Item (ex: 10.66)</label><input id="f-id" placeholder="Código único"></div>
+    <div class="form-row"><label>Etapa</label>
+      <select id="f-etapa">
+        <option value="1">1 – Preparação Cutover</option>
+        <option value="2">2 – Migração</option>
+        <option value="3">3 – Atualização ambiente</option>
+        <option value="4">4 – Folha férias 1ª quinzena</option>
+        <option value="5">5 – Folha adiantamento salário</option>
+        <option value="6">6 – Folha férias 2ª quinzena</option>
+        <option value="7">7 – Folha Vale transporte</option>
+        <option value="8">8 – Folha adiantamento</option>
+        <option value="9">9 – Folha Rescisão</option>
+        <option value="10">10 – Folha mensal / Benefícios</option>
+        <option value="11">11 – Folha Diretores</option>
+        <option value="12">12 – Folha provisões</option>
+        <option value="13">13 – Contábil</option>
+        <option value="14">14 – Financeiro</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Descrição</label><input id="f-title" placeholder="Descrição da atividade"></div>
+    <div class="form-row"><label>Progresso</label>
+      <select id="f-prog">
+        <option value="0">0% — Não iniciado</option>
+        <option value="25">25% — Iniciado</option>
+        <option value="50">50% — Em andamento</option>
+        <option value="75">75% — Quase concluído</option>
+        <option value="100">100% — Concluído</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Responsável</label><input id="f-resp" placeholder="Nome do responsável"></div>
+    <div class="form-row"><label>Observações</label><textarea id="f-obs" placeholder="Observações..."></textarea></div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTask()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="td-overlay" id="task-detail-overlay" onclick="if(event.target===this)closeTaskDetail()">
+  <div class="td-box">
+    <button class="td-close" onclick="closeTaskDetail()">&#215;</button>
+    <h3 id="td-title" style="font-size:16px;font-weight:800;color:var(--text1);padding-right:30px"></h3>
+    <div class="td-grid" id="td-grid"></div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn" onclick="closeTaskDetail()">Fechar</button>
+      <button class="btn btn-primary" id="td-edit-btn">&#9998; Editar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const GIST_ID='bf4c4737c5ba9548740eaa364f332fb9';
+const ENCRYPTED_TOKEN='3124391f64417d4c3b221a0d02455c442203212d736a7d430f227a1407044a001f3c78275b547361';
+const LS_KEY='vli_fluxo_v1';
+const LS_DEL='vli_fluxo_del';
+const LS_LOG='vli_fluxo_log';
+const LS_SAVE='vli_fluxo_save';
+const ETAPA_NAMES={1:"Preparação Cutover",2:"Migração",3:"Atualização ambiente",4:"Folha férias 1ª quinzena",5:"Folha adiantamento salário",6:"Folha férias 2ª quinzena",7:"Folha Vale transporte",8:"Folha adiantamento",9:"Folha Rescisão",10:"Folha mensal / Benefícios",11:"Folha Diretores",12:"Folha provisões",13:"Contábil",14:"Financeiro"};
+
+function xorStr(s,k){let r='';for(let i=0;i<s.length;i++)r+=String.fromCharCode(s.charCodeAt(i)^k.charCodeAt(i%k.length));return r;}
+function hexToStr(h){let r='';for(let i=0;i<h.length;i+=2)r+=String.fromCharCode(parseInt(h.substr(i,2),16));return r;}
+let _decryptedToken=null;
+function decryptToken(pwd){try{return xorStr(hexToStr(ENCRYPTED_TOKEN),pwd);}catch(e){return '';}}
+
+const TASKS_DEFAULT=[
+  {id:'1',g:1,title:"Prepara\u00e7\u00e3o Cutover",prog:100,hdr:true},
+  {id:'1.1',g:1,title:"Estorno folha f\u00e9rias Empresa 16,30,93,233,372,378",prog:100},
+  {id:'1.2',g:1,title:"Estorno folha Rescis\u00e3o Empresa 16,30,93,233,372,378",prog:100},
+  {id:'1.3',g:1,title:"Estorno folha VR/VA Empresa 16,30,93,233,372,378",prog:100},
+  {id:'1.4',g:1,title:"Estorno folha VT Empresa 16,30,93,233,372,378",prog:100},
+  {id:'1.5',g:1,title:"Estorno folha ADT SALARIO Empresa 16,30,93,233,372,378",prog:100},
+  {id:'1.6',g:1,title:"Estorno folha Outros ADT  Empresa 16,30,93,233,372,378",prog:100},
+  {id:'1.7',g:1,title:"Virada de refer\u00eancia 16,30,93,233,372,378",prog:100},
+  {id:'2',g:2,title:"Migra\u00e7\u00e3o",prog:0,hdr:true},
+  {id:'2.1',g:2,title:"Aguarda ok de migra\u00e7\u00e3o",prog:0},
+  {id:'3',g:3,title:"Atualiza\u00e7\u00e3o ambiente",prog:0,hdr:true},
+  {id:'3.1',g:3,title:"Atualiza\u00e7\u00e3o Informa\u00e7\u00e3o adicional",prog:0},
+  {id:'3.2',g:3,title:"Atualiza\u00e7\u00e3o faixa de encargos",prog:0},
+  {id:'4',g:4,title:"Folha f\u00e9rias 1\u00aa  quinzena",prog:0,hdr:true},
+  {id:'4.1',g:4,title:"Extrair e comparara Ocorr\u00eancias de f\u00e9rias 1\u00aa quinzena",prog:0},
+  {id:'4.2',g:4,title:"Executar calculo da folha",prog:0},
+  {id:'4.3',g:4,title:"Valida\u00e7\u00e3o de calculos (OBS: F\u00e9rias bipartidas)",prog:0},
+  {id:'4.4',g:4,title:"Emiss\u00e3o resumo da folha",prog:0},
+  {id:'4.5',g:4,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio empregados",prog:0},
+  {id:'4.6',g:4,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio Pensionista",prog:0},
+  {id:'4.7',g:4,title:"Valida\u00e7\u00e3o da intergra\u00e7\u00e3o do Arquivo banc\u00e1rio",prog:0},
+  {id:'4.8',g:4,title:"Validar reflexo dos eventos na folha mensal",prog:0},
+  {id:'5',g:5,title:"Folha adiantamento sal\u00e1rio",prog:0,hdr:true},
+  {id:'5.1',g:5,title:"Extrair indicador calculo Adt salario",prog:0},
+  {id:'5.2',g:5,title:"Executar calculo da folha",prog:0},
+  {id:'5.3',g:5,title:"Valida\u00e7\u00e3o de calculos",prog:0},
+  {id:'5.4',g:5,title:"Emiss\u00e3o resumo da folha",prog:0},
+  {id:'5.5',g:5,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio empregados",prog:0},
+  {id:'5.6',g:5,title:"Valida\u00e7\u00e3o da intergra\u00e7\u00e3o do Arquivo banc\u00e1rio",prog:0},
+  {id:'6',g:6,title:"Folha f\u00e9rias 1\u00aa  quinzena",prog:0,hdr:true},
+  {id:'6.1',g:6,title:"Extrair e comparara Ocorr\u00eancias de f\u00e9rias 1\u00aa quinzena",prog:0},
+  {id:'6.2',g:6,title:"Executar calculo da folha",prog:0},
+  {id:'6.3',g:6,title:"Valida\u00e7\u00e3o de calculos (OBS: F\u00e9rias bipartidas)",prog:0},
+  {id:'6.4',g:6,title:"Emiss\u00e3o resumo da folha",prog:0},
+  {id:'6.5',g:6,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio empregados",prog:0},
+  {id:'6.6',g:6,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio Pensionista",prog:0},
+  {id:'6.7',g:6,title:"Valida\u00e7\u00e3o da intergra\u00e7\u00e3o do Arquivo banc\u00e1rio",prog:0},
+  {id:'6.8',g:6,title:"Validar reflexo dos eventos na folha mensal",prog:0},
+  {id:'7',g:7,title:"Folha Vale transporte",prog:0,hdr:true},
+  {id:'7.1',g:7,title:"Verificar os Admitidos em 09/2026 Janela 1 com VT",prog:0},
+  {id:'7.2',g:7,title:"Verificar os Admitidos em 09/2026 Janela 2 com VT",prog:0},
+  {id:'7.3',g:7,title:"Verificar os Admitidos em 09/2026 Janela 3 com VT",prog:0},
+  {id:'7.4',g:7,title:"Verificar os Admitidos em 09/2026 Janela 4 com VT",prog:0},
+  {id:'7.5',g:7,title:"associaras linhas de tranporte aos empregados",prog:0},
+  {id:'7.6',g:7,title:"Extrair do FPW os valores pagos a titulo de VT",prog:0},
+  {id:'7.7',g:7,title:"Executar calculo da folha",prog:0},
+  {id:'7.8',g:7,title:"Emiss\u00e3o resumo da folha",prog:0},
+  {id:'7.9',g:7,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio empregados",prog:0},
+  {id:'7.10',g:7,title:"Valida\u00e7\u00e3o da intergra\u00e7\u00e3o do Arquivo banc\u00e1rio",prog:0},
+  {id:'7.11',g:7,title:"Validar reflexo dos eventos na folha mensal",prog:0},
+  {id:'8',g:8,title:"Folha adiantamento",prog:0,hdr:true},
+  {id:'8.1',g:8,title:"Verificar no FPW valores lan\u00e7ados na folha 30",prog:0},
+  {id:'8.2',g:8,title:"Verificar no FPW valores lan\u00e7ados na folha 31",prog:0},
+  {id:'8.3',g:8,title:"Verificar no FPW valores lan\u00e7ados na folha 32",prog:0},
+  {id:'8.4',g:8,title:"Executar calculo da folha",prog:0},
+  {id:'8.5',g:8,title:"Emiss\u00e3o resumo da folha",prog:0},
+  {id:'8.6',g:8,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio empregados",prog:0},
+  {id:'8.7',g:8,title:"Valida\u00e7\u00e3o da intergra\u00e7\u00e3o do Arquivo banc\u00e1rio",prog:0},
+  {id:'8.8',g:8,title:"Validar reflexo dos eventos na folha mensal",prog:0},
+  {id:'9',g:9,title:"Folha Rescis\u00e3o",prog:0,hdr:true},
+  {id:'9.1',g:9,title:"Extrair e comparara Ocorr\u00eancias de Rescis\u00e3o",prog:0},
+  {id:'9.2',g:9,title:"Importar Frequ\u00eancia",prog:0},
+  {id:'9.3',g:9,title:"Importar Saldo FGTS",prog:0},
+  {id:'9.4',g:9,title:"Executar calculo da folha",prog:0},
+  {id:'9.5',g:9,title:"Valida\u00e7\u00e3o de calculos",prog:0},
+  {id:'9.6',g:9,title:"Emiss\u00e3o GRRF",prog:0},
+  {id:'9.7',g:9,title:"Emiss\u00e3o Seguro desemprego",prog:0},
+  {id:'9.8',g:9,title:"Emiss\u00e3o resumo da folha",prog:0},
+  {id:'9.9',g:9,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio empregados",prog:0},
+  {id:'9.10',g:9,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio Pensionista",prog:0},
+  {id:'9.11',g:9,title:"Valida\u00e7\u00e3o da intergra\u00e7\u00e3o do Arquivo banc\u00e1rio",prog:0},
+  {id:'10',g:10,title:"Folha mensal / Desconto Beneficios",prog:0,hdr:true},
+  {id:'10.1',g:10,title:"Importar Frequ\u00eancia",prog:0},
+  {id:'10.2',g:10,title:"Importar valor compra VT",prog:0},
+  {id:'10.3',g:10,title:"Importar Evento carga horaria",prog:0},
+  {id:'10.4',g:10,title:"Baixar e importar Econsignado",prog:0},
+  {id:'10.5',g:10,title:"Executar calculo da folha",prog:0},
+  {id:'10.6',g:10,title:"Salario proporcional Empregados em afastamentos",prog:0},
+  {id:'10.7',g:10,title:"Salario proporcional Empregados Admitidos",prog:0},
+  {id:'10.8',g:10,title:"Verficiar Solicita\u00e7\u00e3o emprestimo de f\u00e9rias",prog:0},
+  {id:'10.9',g:10,title:"Desconto adiantamento de salario",prog:0},
+  {id:'10.10',g:10,title:"Calculo f\u00e9rias na mensal",prog:0},
+  {id:'10.11',g:10,title:"Desconto parcelamento f\u00e9rias",prog:0},
+  {id:'10.12',g:10,title:"Descontos Faltas",prog:0},
+  {id:'10.13',g:10,title:"Pgto horas extras / Adicional noturno / Outros",prog:0},
+  {id:'10.14',g:10,title:"Periculosidade",prog:0},
+  {id:'10.15',g:10,title:"Insalubridade",prog:0},
+  {id:'10.16',g:10,title:"Regulariza\u00e7\u00e3o VT Admitidos na folha mensal",prog:0},
+  {id:'10.17',g:10,title:"Valida\u00e7\u00e3o de calculos (OBS: F\u00e9rias bipartidas)",prog:0},
+  {id:'10.18',g:10,title:"REEMBOLSO CRECHE / BAB\u00c1",prog:0},
+  {id:'10.19',g:10,title:"CNU 408 APARTAMENTO TIPLAM",prog:0},
+  {id:'10.20',g:10,title:"CNU 408 ENFERMARIA TIPLAM",prog:0},
+  {id:'10.21',g:10,title:"CNU 6622 APARTAMENTO TIPLAM",prog:0},
+  {id:'10.22',g:10,title:"CNU 6622 ENFERMARIA TIPLAM",prog:0},
+  {id:'10.23',g:10,title:"UNIMED ENFERMARIA",prog:0},
+  {id:'10.24',g:10,title:"UNIMED ENFERMARIA DETERMINA\u00c7\u00c3O JUDICIAL",prog:0},
+  {id:'10.25',g:10,title:"UNIMED ENFERMARIA APOSENTADORIA POR INVALIDEZ",prog:0},
+  {id:'10.26',g:10,title:"AMS APARTAMENTO",prog:0},
+  {id:'10.27',g:10,title:"AMS MENOR APRENDIZ",prog:0},
+  {id:'10.28',g:10,title:"AMS APARTAMENTO TEMPO DETERMINADO",prog:0},
+  {id:'10.29',g:10,title:"AMS TOCANTINS",prog:0},
+  {id:'10.30',g:10,title:"AMS TOCANTINS ACT",prog:0},
+  {id:'10.31',g:10,title:"AMS VIP",prog:0},
+  {id:'10.32',g:10,title:"AMS VIP (DESLIGADOS)",prog:0},
+  {id:'10.33',g:10,title:"AMS VIP DIRETORIA EXECUTIVA",prog:0},
+  {id:'10.34',g:10,title:"AMS VIP DETERMINA\u00c7\u00c3O JUDICIAL",prog:0},
+  {id:'10.35',g:10,title:"AMS ACT APARTAMENTO",prog:0},
+  {id:'10.36',g:10,title:"AMS APOSENTADORIA POR INVALIDEZ",prog:0},
+  {id:'10.37',g:10,title:"AMS APARTAMENTO DETERMINA\u00c7\u00c3O JUDICIAL",prog:0},
+  {id:'10.38',g:10,title:"AMS ENFERMARIA",prog:0},
+  {id:'10.39',g:10,title:"AMS ENFERMARIA APOSENTADORIA POR INVALIDEZ",prog:0},
+  {id:'10.40',g:10,title:"AMS ENFERMARIA DETERMINA\u00c7\u00c3O JUDICIAL",prog:0},
+  {id:'10.41',g:10,title:"AMS ENFERMARIA TEMPO DETERMINADO",prog:0},
+  {id:'10.42',g:10,title:"AM CASSI",prog:0},
+  {id:'10.43',g:10,title:"ODONTO BRADESCO ADM ANT 12/21 E DIRETORES",prog:0},
+  {id:'10.44',g:10,title:"ODONTO BRADESCO A PARTIR ADM 01/22",prog:0},
+  {id:'10.45',g:10,title:"ODONTO BRADESCO TIPLAM (RESTRITO)",prog:0},
+  {id:'10.46',g:10,title:"ODONTO BRADESCO ADM ANT 12/21 E DIRETOR DETERM JUDICIAL",prog:0},
+  {id:'10.47',g:10,title:"ODONTO BRADESCO A PARTIR ADM 01/22 DETERMINA\u00c7\u00c3O JUDICIAL",prog:0},
+  {id:'10.48',g:10,title:"ODONTO BRADESCO TIPLAN (RESTRITO) DETER JUDICIAL",prog:0},
+  {id:'10.49',g:10,title:"PREVIDENCIA PRIVADA VALE MAIS",prog:0},
+  {id:'10.50',g:10,title:"PREVIDENCIA PRIVADA VALIAPREV",prog:0},
+  {id:'10.51',g:10,title:"REEMBOLSO CONSELHO DE CLASSE",prog:0},
+  {id:'10.52',g:10,title:"REEMBOLSO EDUCACIONAL",prog:0},
+  {id:'10.53',g:10,title:"REEMBOLSO MORADIA",prog:0},
+  {id:'10.54',g:10,title:"SEGURO DE VIDA",prog:0},
+  {id:'10.55',g:10,title:"REEMBOLSO TECNOLOGIA ASSISTIVA",prog:0},
+  {id:'10.56',g:10,title:"VALE ALIMENTA\u00c7\u00c3O",prog:0},
+  {id:'10.57',g:10,title:"VALE REFEICAO",prog:0},
+  {id:'10.58',g:10,title:"Emiss\u00e3o resumo da folha",prog:0},
+  {id:'10.59',g:10,title:"Valida\u00e7\u00e3o GPS Parte empresa",prog:0},
+  {id:'10.60',g:10,title:"Valida\u00e7\u00e3o GPS Terceiros",prog:0},
+  {id:'10.61',g:10,title:"Valida\u00e7\u00e3o GPS Desc empregados",prog:0},
+  {id:'10.62',g:10,title:"Valida\u00e7\u00e3o IRRF",prog:0},
+  {id:'10.63',g:10,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio empregados",prog:0},
+  {id:'10.64',g:10,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio Pensionista",prog:0},
+  {id:'10.65',g:10,title:"Valida\u00e7\u00e3o da intergra\u00e7\u00e3o do Arquivo banc\u00e1rio",prog:0},
+  {id:'11',g:11,title:"Folha Diretores",prog:0,hdr:true},
+  {id:'11.1',g:11,title:"Executar calculo da folha",prog:0},
+  {id:'11.2',g:11,title:"Valida\u00e7\u00e3o de calculos",prog:0},
+  {id:'11.3',g:11,title:"Emiss\u00e3o resumo da folha",prog:0},
+  {id:'11.4',g:11,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio empregados",prog:0},
+  {id:'11.5',g:11,title:"Gera\u00e7\u00e3o arquivo banc\u00e1rio Pensionista",prog:0},
+  {id:'11.6',g:11,title:"Valida\u00e7\u00e3o da intergra\u00e7\u00e3o do Arquivo banc\u00e1rio",prog:0},
+  {id:'12',g:12,title:"Folha provis\u00f5es",prog:0,hdr:true},
+  {id:'12.1',g:12,title:"Importar saldo acumulado Agosto2026",prog:0},
+  {id:'12.2',g:12,title:"Executar calculo da folha",prog:0},
+  {id:'12.3',g:12,title:"Valida\u00e7\u00e3o de calculos",prog:0},
+  {id:'13',g:13,title:"Cont\u00e1bil",prog:0,hdr:true},
+  {id:'13.1',g:13,title:"Verificar Eventos sem informa\u00e7\u00f5es cont\u00e1beis",prog:0},
+  {id:'13.2',g:13,title:"Gera\u00e7\u00e3o arquivo cont\u00e1bil folha Mensal, Rescis\u00e3o e Provis\u00e3o",prog:0},
+  {id:'13.3',g:13,title:"Valida\u00e7\u00e3o cont\u00e1bil",prog:0},
+  {id:'13.4',g:13,title:"Disponibiliza\u00e7\u00e3o do arquivo para aplica\u00e7\u00e3o Depara CC",prog:0},
+  {id:'13.5',g:13,title:"Valida\u00e7\u00e3o do arquivo p\u00f3s Depara CC",prog:0},
+  {id:'13.6',g:13,title:"Libera\u00e7\u00e3o do arquivo para integra\u00e7\u00e3o SAP",prog:0},
+  {id:'13.7',g:13,title:"Valida\u00e7\u00e3o de integra\u00e7\u00e3o no SAP",prog:0},
+  {id:'14',g:14,title:"Financeiro",prog:0,hdr:true},
+  {id:'14.1',g:14,title:"Gera\u00e7\u00e3o arquivo financeiro Liquido salarial",prog:0},
+  {id:'14.2',g:14,title:"Valida\u00e7\u00e3o Financeiro",prog:0},
+  {id:'14.3',g:14,title:"Libera\u00e7\u00e3o do arquivo para integra\u00e7\u00e3o SAP",prog:0},
+  {id:'14.4',g:14,title:"Valida\u00e7\u00e3o de integra\u00e7\u00e3o no SAP",prog:0},
+  {id:'14.5',g:14,title:"Gera\u00e7\u00e3o arquivo financeiro Liquido pens\u00f5es",prog:0},
+  {id:'14.6',g:14,title:"Valida\u00e7\u00e3o Financeiro",prog:0},
+  {id:'14.7',g:14,title:"Libera\u00e7\u00e3o do arquivo para integra\u00e7\u00e3o SAP",prog:0},
+  {id:'14.8',g:14,title:"Valida\u00e7\u00e3o de integra\u00e7\u00e3o no SAP",prog:0},
+  {id:'14.9',g:14,title:"Gera\u00e7\u00e3o arquivo financeiro Liquido contas a Pagar",prog:0},
+  {id:'14.10',g:14,title:"Valida\u00e7\u00e3o Financeiro",prog:0},
+  {id:'14.11',g:14,title:"Libera\u00e7\u00e3o do arquivo para integra\u00e7\u00e3o SAP",prog:0},
+  {id:'14.12',g:14,title:"Valida\u00e7\u00e3o de integra\u00e7\u00e3o no SAP",prog:0}
+];
+
+let tasks=[],sortKey='id',sortDir=1,editId=null;
+let _deletedIds=new Set(),activityLog=[],_progFilter=new Set();
+let etapaChart=null,statusChart=null;
+
+function doLogin(){
+  const pwd=document.getElementById('pwd-input').value;
+  const tok=decryptToken(pwd);
+  if(tok&&tok.length>20&&(tok.startsWith('github_')||tok.startsWith('ghp_')||tok.startsWith('ghs_'))){
+    _decryptedToken=tok;
+    document.getElementById('lock-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    init();
+  }else{
+    document.getElementById('pwd-error').textContent='Senha incorreta.';
+    document.getElementById('pwd-input').style.borderColor='#DC2626';
+  }
+}
+
+function init(){
+  load();renderTable();updateKPIs();initCharts();renderPipeline();renderActivityLog();
+  setTimeout(()=>syncFromGistSilent(),800);
+  document.addEventListener('click',function(e){
+    if(!e.target.closest('#filter-prog-wrap')){const p=document.getElementById('filter-prog-panel');if(p)p.style.display='none';}
+  });
+}
+
+function load(){
+  try{const d=localStorage.getItem(LS_DEL);if(d)_deletedIds=new Set(JSON.parse(d));}catch(e){}
+  try{const l=localStorage.getItem(LS_LOG);if(l)activityLog=JSON.parse(l);}catch(e){}
+  const s=localStorage.getItem(LS_KEY);
+  if(s){
+    tasks=JSON.parse(s).filter(t=>!_deletedIds.has(t.id));
+    const dm={};TASKS_DEFAULT.forEach(t=>{dm[t.id]=t;});
+    tasks=tasks.map(t=>{const d=dm[t.id]||{};return Object.assign({},d,t,{resp:t.resp||d.resp||''});});
+    const ei=new Set(tasks.map(t=>t.id));
+    TASKS_DEFAULT.forEach(t=>{if(!ei.has(t.id)&&!_deletedIds.has(t.id))tasks.push(JSON.parse(JSON.stringify(t)));});
+    tasks.sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''),undefined,{numeric:true}));
+  }else{tasks=JSON.parse(JSON.stringify(TASKS_DEFAULT));}
+}
+
+function save(){localStorage.setItem(LS_KEY,JSON.stringify(tasks));localStorage.setItem(LS_SAVE,Date.now().toString());setTimeout(()=>syncToGist(false),300);}
+
+function active(){return tasks.filter(t=>!t.hdr);}
+function stats(){
+  const t=active();const total=t.length;
+  const done=t.filter(x=>x.prog===100).length,wip=t.filter(x=>x.prog>0&&x.prog<100).length,pend=t.filter(x=>x.prog===0).length;
+  const overall=total>0?Math.round(t.reduce((s,x)=>s+x.prog,0)/total):0;
+  return{total,done,wip,pend,overall};
+}
+
+function updateKPIs(){
+  const s=stats();
+  document.getElementById('kpi-overall').textContent=s.overall+'%';
+  document.getElementById('kpi-overall-sub').textContent=s.total+' atividades';
+  document.getElementById('kpi-done').textContent=s.done;
+  document.getElementById('kpi-done-sub').textContent=Math.round(s.done/Math.max(s.total,1)*100)+'% do total';
+  document.getElementById('kpi-wip').textContent=s.wip;
+  document.getElementById('kpi-wip-sub').textContent='em execução';
+  document.getElementById('kpi-pend').textContent=s.pend;
+  document.getElementById('kpi-pend-sub').textContent='aguardando início';
+  let etapaAtual=null;const etapasDone=[];
+  for(let g=1;g<=14;g++){const gt=active().filter(t=>t.g===g);if(!gt.length)continue;if(gt.every(t=>t.prog===100))etapasDone.push(g);else if(!etapaAtual)etapaAtual=g;}
+  document.getElementById('kpi-etapa').textContent=etapaAtual?'Etapa '+etapaAtual:'&#10003; Concluído';
+  document.getElementById('kpi-etapa-sub').textContent=etapaAtual?(ETAPA_NAMES[etapaAtual]||''):'Todas concluídas';
+  document.getElementById('kpi-etapas-done').textContent=etapasDone.length;
+}
+
+function renderPipeline(){
+  const row=document.getElementById('pipeline-row');if(!row)return;
+  let html='';
+  for(let g=1;g<=14;g++){
+    const gt=active().filter(t=>t.g===g);
+    const pct=gt.length>0?Math.round(gt.reduce((s,t)=>s+t.prog,0)/gt.length):0;
+    const cls=pct===100?'done':pct>0?'wip':'pend';
+    const name=(ETAPA_NAMES[g]||'Etapa '+g);
+    const sn=name.length>16?name.substring(0,14)+'…':name;
+    html+=`<div class="pipe-step"><div class="pipe-node ${cls}" onclick="filterByEtapa(${g})" title="${name}"><span class="pipe-pct">${pct}%</span><span class="pipe-name">${g}. ${sn}</span></div>${g<14?'<div class="pipe-arrow">›</div>':''}</div>`;
+  }
+  row.innerHTML=html;
+}
+function filterByEtapa(g){document.getElementById('filter-etapa').value=String(g);applyFilters();document.querySelector('.task-table-wrap')?.scrollIntoView({behavior:'smooth',block:'start'});}
+
+function initCharts(){
+  const labels=[],data=[],colors=[];
+  for(let g=1;g<=14;g++){
+    const gt=active().filter(t=>t.g===g);
+    const pct=gt.length>0?Math.round(gt.reduce((s,t)=>s+t.prog,0)/gt.length):0;
+    labels.push('E'+g);data.push(pct);
+    colors.push(pct===100?'#16A34A':pct>0?'#F47920':'#94A3B8');
+  }
+  if(etapaChart)etapaChart.destroy();
+  etapaChart=new Chart(document.getElementById('etapaChart'),{type:'bar',data:{labels,datasets:[{label:'%',data,backgroundColor:colors,borderRadius:4,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:9,weight:'600'}}},y:{grid:{color:'#EEF2F7'},ticks:{font:{size:10,weight:'600'}},min:0,max:100}}}});
+  const s=stats();
+  if(statusChart)statusChart.destroy();
+  statusChart=new Chart(document.getElementById('statusChart'),{type:'doughnut',data:{labels:['Concluídas','Em andamento','Não iniciadas'],datasets:[{data:[s.done,s.wip,s.pend],backgroundColor:['#16A34A','#F47920','#94A3B8'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{font:{size:11,weight:'600'},boxWidth:10,padding:12}}}}});
+}
+
+function progColor(p){return p===0?'#C8D4E2':p===25?'#D97706':p===50?'#1B7EC8':p===75?'#7C3AED':'#16A34A';}
+function statusLabel(p){return p===0?'Não iniciado':p===25?'Iniciado':p===50?'Em andamento':p===75?'Quase concluído':'Concluído';}
+
+function sortBy(k){if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;}renderTable();}
+
+function renderTable(){
+  const fg=document.getElementById('filter-etapa').value;
+  const fa=filteredActive();const faIds=new Set(fa.map(t=>t.id));const visGs=new Set(fa.map(t=>t.g));
+  const filtered=tasks.filter(t=>{if(t.hdr)return visGs.has(t.g)&&(!fg||String(t.g)===fg);return faIds.has(t.id);});
+  const tbody=document.getElementById('task-tbody');tbody.innerHTML='';
+  filtered.forEach(t=>{
+    const tr=document.createElement('tr');
+    if(t.hdr){
+      const gt=active().filter(x=>x.g===t.g);const total=gt.length;
+      const done=gt.filter(x=>x.prog===100).length,wip=gt.filter(x=>x.prog>0&&x.prog<100).length,pend=gt.filter(x=>x.prog===0).length;
+      const pct=total>0?Math.round(done/total*100):0;
+      tr.className='grp-hdr';
+      tr.innerHTML=`<td colspan="5"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><span style="color:var(--blue);font-size:13px;font-weight:800">${t.id}. ${t.title}</span><span style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px;font-weight:700"><span style="color:var(--text3)">Total <b style="color:var(--text1)">${total}</b></span><span style="color:var(--green)">&#10003; <b>${done}</b> (${pct}%)</span><span style="color:var(--orange)">&#8635; <b>${wip}</b></span><span style="color:var(--text4)">&#9675; <b>${pend}</b></span></span></div></td>`;
+    }else{
+      tr.className='task-row';tr.onclick=()=>openTaskDetail(t.id);
+      const col=progColor(t.prog);
+      const qopts=[0,25,50,75,100].map(v=>`<option value="${v}"${t.prog===v?' selected':''}>  ${v}%</option>`).join('');
+      tr.innerHTML=`<td style="font-weight:700;color:var(--blue)">${t.id}</td><td>${t.title}${t.resp?`<div style="font-size:10px;color:var(--text3);margin-top:2px">&#128100; ${t.resp}</div>`:''}</td><td><span class="pill" style="background:${col}22;color:${col}">${statusLabel(t.prog)}</span></td><td style="text-align:center"><select style="background:${col};color:#fff;border:none;cursor:pointer;font-family:var(--font);font-weight:700;font-size:11px;border-radius:20px;padding:0 8px;height:22px;width:70px" onchange="quickProg('${t.id}',parseInt(this.value))" onclick="event.stopPropagation()">${qopts}</select></td><td style="text-align:center"><button class="btn btn-ghost" style="padding:0 6px;height:24px;font-size:14px" onclick="event.stopPropagation();delTask('${t.id}')" title="Excluir">&#128465;</button></td>`;
+    }
+    tbody.appendChild(tr);
+  });
+  if(!filtered.length){const tr=document.createElement('tr');tr.innerHTML='<td colspan="5" style="text-align:center;padding:32px;color:var(--text3);font-weight:600">Nenhuma atividade encontrada</td>';tbody.appendChild(tr);}
+}
+
+function filteredActive(){
+  const q=(document.getElementById('search-input').value||'').toLowerCase().trim();
+  const fg=document.getElementById('filter-etapa').value;
+  return active().filter(t=>{
+    if(q&&!t.title.toLowerCase().includes(q)&&!(t.resp||'').toLowerCase().includes(q)&&!String(t.id).includes(q))return false;
+    if(fg&&String(t.g)!==fg)return false;
+    if(_progFilter.size>0&&!_progFilter.has(String(t.prog)))return false;
+    return true;
+  });
+}
+function hasActiveFilters(){if(_progFilter.size>0)return true;return['search-input','filter-etapa'].some(id=>{const el=document.getElementById(id);return el&&el.value!=='';}); }
+function applyFilters(){
+  const a=hasActiveFilters();
+  const btn=document.getElementById('btn-clear-filters');if(btn)btn.style.display=a?'':'none';
+  const fa=filteredActive();
+  const badge=document.getElementById('filter-badge'),badgeText=document.getElementById('filter-badge-text');
+  if(a&&badge&&badgeText){badge.style.display='flex';badgeText.textContent=fa.length+' atividades filtradas';}else if(badge){badge.style.display='none';}
+  renderTable();updateKPIs();initCharts();renderPipeline();
+}
+function resetFilters(){clearProgFilter();['search-input','filter-etapa'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('btn-clear-filters').style.display='none';document.getElementById('filter-badge').style.display='none';applyFilters();}
+function toggleProgDropdown(e){const p=document.getElementById('filter-prog-panel');if(!p)return;p.style.display=p.style.display==='none'?'block':'none';}
+function toggleProgFilter(cb){if(cb.checked)_progFilter.add(cb.value);else _progFilter.delete(cb.value);updateProgLabel();applyFilters();}
+function clearProgFilter(){_progFilter.clear();['0','25','50','75','100'].forEach(v=>{const cb=document.getElementById('fpchk'+v);if(cb)cb.checked=false;});updateProgLabel();applyFilters();}
+function updateProgLabel(){
+  const el=document.getElementById('filter-prog-label');if(!el)return;
+  if(_progFilter.size===0){el.textContent='Todos os Status';el.style.color='var(--text3)';return;}
+  if(_progFilter.size===1){const m={'0':'Não iniciado','25':'Iniciado','50':'Em andamento','75':'Quase concluído','100':'Concluído'};el.textContent=m[[..._progFilter][0]]||[..._progFilter][0]+'%';}
+  else{el.textContent=_progFilter.size+' status selecionados';}
+  el.style.color='var(--blue)';
+}
+
+function openModal(id){
+  editId=id;const t=id?tasks.find(x=>x.id===id):null;
+  document.getElementById('modal-title').textContent=id?'Editar Atividade':'Nova Atividade';
+  document.getElementById('f-id').value=t?t.id:'';document.getElementById('f-id').disabled=!!id;
+  document.getElementById('f-etapa').value=t?t.g:1;document.getElementById('f-title').value=t?t.title:'';
+  document.getElementById('f-prog').value=t?t.prog:0;document.getElementById('f-resp').value=t?t.resp||'':'';
+  document.getElementById('f-obs').value=t?t.obs||'':'';
+  document.getElementById('task-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('task-modal').classList.remove('open');editId=null;}
+function saveTask(){
+  const id=(editId||document.getElementById('f-id').value.trim());
+  if(!id){alert('Informe o código da atividade.');return;}
+  const g=parseInt(document.getElementById('f-etapa').value);
+  const title=document.getElementById('f-title').value.trim();if(!title){alert('Informe a descrição.');return;}
+  const prog=parseInt(document.getElementById('f-prog').value);
+  const resp=document.getElementById('f-resp').value.trim();const obs=document.getElementById('f-obs').value.trim();
+  if(editId){const t=tasks.find(x=>x.id===editId);if(t)Object.assign(t,{g,title,prog,resp,obs,_ts:Date.now()});}
+  else{if(tasks.find(x=>x.id===id&&!x.hdr)){alert('Código já existe.');return;}tasks.push({id,g,title,prog,resp,obs,_ts:Date.now()});tasks.sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}));}
+  const saved=tasks.find(x=>x.id===id);if(saved)logActivity(editId?'edit':'add',saved,editId?'Atividade editada':'Atividade adicionada');
+  save();closeModal();renderTable();updateKPIs();initCharts();renderPipeline();toast(editId?'Atividade atualizada':'Atividade adicionada','ok');
+}
+
+function quickProg(id,val){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  const prev=t.prog;t.prog=val;t._ts=Date.now();
+  logActivity('progress',t,prev+'% → '+val+'%');
+  save();renderTable();updateKPIs();initCharts();renderPipeline();toast(t.id+' → '+val+'%','ok');
+}
+
+function delTask(id){
+  if(!confirm('Excluir esta atividade?'))return;
+  const t=tasks.find(x=>x.id===id);if(t)logActivity('delete',t,'Atividade excluída');
+  _deletedIds.add(id);localStorage.setItem(LS_DEL,JSON.stringify([..._deletedIds]));
+  tasks=tasks.filter(x=>x.id!==id);save();renderTable();updateKPIs();initCharts();renderPipeline();toast('Excluído','ok');
+}
+
+function openTaskDetail(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  document.getElementById('td-title').textContent=t.id+' — '+t.title;
+  const col=progColor(t.prog);
+  document.getElementById('td-grid').innerHTML=`<div class="td-field"><div class="td-field-label">Etapa</div><div class="td-field-val">${t.g} — ${ETAPA_NAMES[t.g]||''}</div></div><div class="td-field"><div class="td-field-label">Progresso</div><div class="td-field-val"><span style="color:${col};font-weight:800">${t.prog}%</span> — ${statusLabel(t.prog)}</div></div><div class="td-field"><div class="td-field-label">Responsável</div><div class="td-field-val">${t.resp||'—'}</div></div><div class="td-field"><div class="td-field-label">Código</div><div class="td-field-val">${t.id}</div></div><div class="td-field full"><div class="td-field-label">Observações</div><div class="td-field-val" style="white-space:pre-wrap">${t.obs||'—'}</div></div>${t._ts?`<div class="td-field full"><div class="td-field-label">Última atualização</div><div class="td-field-val">${new Date(t._ts).toLocaleString('pt-BR')}</div></div>`:''}`;
+  document.getElementById('td-edit-btn').onclick=()=>{closeTaskDetail();openModal(id);};
+  document.getElementById('task-detail-overlay').classList.add('open');
+}
+function closeTaskDetail(){document.getElementById('task-detail-overlay').classList.remove('open');}
+
+function logActivity(action,task,detail){
+  const icons={add:'➕',delete:'🗑',edit:'✏️',progress:'📊'};
+  const labels={add:'Adicionada',delete:'Excluída',edit:'Editada',progress:'Progresso'};
+  activityLog.unshift({ts:Date.now(),action,icon:icons[action]||'·',label:labels[action]||action,item:task.id||'',title:(task.title||'').substring(0,60),detail:detail||''});
+  if(activityLog.length>50)activityLog=activityLog.slice(0,50);
+  localStorage.setItem(LS_LOG,JSON.stringify(activityLog));renderActivityLog();
+}
+function renderActivityLog(){
+  const el=document.getElementById('activity-log-list');if(!el)return;
+  if(activityLog.length===0){el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:24px 0">Nenhuma ação registrada ainda.</div>';return;}
+  el.innerHTML=activityLog.slice(0,30).map(e=>{
+    const dt=new Date(e.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    return`<div class="act-entry"><div class="act-icon">${e.icon}</div><div class="act-body"><div class="act-title">${e.label} · <span style="color:var(--blue)">${e.item}</span> ${e.title}</div>${e.detail?`<div class="act-detail">${e.detail}</div>`:''}<div class="act-time">${dt}</div></div></div>`;
+  }).join('');
+}
+
+function toast(msg,type){const el=document.getElementById('toast');el.textContent=msg;el.className='show '+(type||'');setTimeout(()=>el.className='',2400);}
+
+async function syncToGist(showToast){
+  const key=_decryptedToken||'';if(!key||!GIST_ID||GIST_ID==='GIST_ID_PLACEHOLDER'){if(showToast)toast('Gist não configurado','warn');return;}
+  try{
+    const fr=await fetch('https://api.github.com/gists/'+GIST_ID,{headers:{'Authorization':'token '+key,'User-Agent':'VLI-Fluxo'}});
+    if(fr.ok){
+      const fd=await fr.json();
+      try{
+        const fc=JSON.parse(fd.files['vli_fluxo_data.json'].content);
+        if(fc.tasks&&fc.tasks.length>0){
+          const rm={};fc.tasks.forEach(t=>{rm[t.id]=t;});
+          tasks=tasks.map(t=>{const r=rm[t.id];return(r&&(r._ts||0)>(t._ts||0))?r:t;});
+          if(fc.deletedIds)fc.deletedIds.forEach(id=>_deletedIds.add(id));
+          const li=new Set(tasks.map(t=>t.id));fc.tasks.forEach(t=>{if(!li.has(t.id)&&!_deletedIds.has(t.id))tasks.push(t);});
+          tasks=tasks.filter(t=>!_deletedIds.has(t.id));
+          localStorage.setItem(LS_DEL,JSON.stringify([..._deletedIds]));
+          if(fc.activityLog&&fc.activityLog.length>0){const lts=new Set(activityLog.map(e=>e.ts));const mrgd=activityLog.concat(fc.activityLog.filter(e=>!lts.has(e.ts)));mrgd.sort((a,b)=>b.ts-a.ts);activityLog=mrgd.slice(0,50);localStorage.setItem(LS_LOG,JSON.stringify(activityLog));renderActivityLog();}
+          localStorage.setItem(LS_KEY,JSON.stringify(tasks));renderTable();updateKPIs();initCharts();renderPipeline();
+        }
+      }catch(e2){}
+    }
+    const payload={version:1,lastSync:new Date().toISOString(),tasks:JSON.parse(JSON.stringify(tasks)),deletedIds:[..._deletedIds],activityLog:activityLog.slice(0,50)};
+    const r=await fetch('https://api.github.com/gists/'+GIST_ID,{method:'PATCH',headers:{'Authorization':'token '+key,'Content-Type':'application/json','User-Agent':'VLI-Fluxo'},body:JSON.stringify({files:{'vli_fluxo_data.json':{content:JSON.stringify(payload,null,2)}}})});
+    if(!r.ok)throw new Error(await r.text());
+    if(showToast)toast('Sincronizado ✓','ok');
+    const el=document.getElementById('sync-status');if(el)el.textContent='Sync: '+new Date().toLocaleTimeString('pt-BR');
+  }catch(e){if(showToast)toast('Erro sync: '+String(e).slice(0,60),'warn');}
+}
+
+async function syncFromGist(){
+  const key=_decryptedToken||'';if(!key||!GIST_ID||GIST_ID==='GIST_ID_PLACEHOLDER'){toast('Gist não configurado','warn');return;}
+  try{
+    const r=await fetch('https://api.github.com/gists/'+GIST_ID,{headers:{'Authorization':'token '+key,'User-Agent':'VLI-Fluxo'}});
+    if(!r.ok)throw new Error();
+    const d=await r.json();const c=JSON.parse(d.files['vli_fluxo_data.json'].content);
+    if(c.tasks&&c.tasks.length>0){
+      const dt=new Date(c.lastSync).toLocaleString('pt-BR');
+      if(confirm('Restaurar '+c.tasks.length+' atividades?
+Salvo em: '+dt+'
+
+Substituirá dados locais.')){tasks=c.tasks;save();renderTable();updateKPIs();initCharts();renderPipeline();toast('Restaurado ✓','ok');}
+    }else{toast('Nenhum dado no Gist ainda','warn');}
+  }catch(e){toast('Erro ao carregar do GitHub','warn');}
+}
+
+async function syncFromGistSilent(){
+  const key=_decryptedToken||'';if(!key||!GIST_ID||GIST_ID==='GIST_ID_PLACEHOLDER')return;
+  try{
+    const r=await fetch('https://api.github.com/gists/'+GIST_ID,{headers:{'Authorization':'token '+key,'User-Agent':'VLI-Fluxo'}});
+    if(!r.ok)return;
+    const d=await r.json();const c=JSON.parse(d.files['vli_fluxo_data.json'].content);
+    if(c.tasks&&c.tasks.length>0){
+      const localDate=new Date(parseInt(localStorage.getItem(LS_SAVE)||'0'));
+      const gistDate=new Date(c.lastSync||0);
+      if(gistDate>localDate){
+        if(c.deletedIds)c.deletedIds.forEach(id=>_deletedIds.add(id));localStorage.setItem(LS_DEL,JSON.stringify([..._deletedIds]));
+        tasks=c.tasks.filter(t=>!_deletedIds.has(t.id));
+        const dm={};TASKS_DEFAULT.forEach(t=>{dm[t.id]=t;});
+        const gi=new Set(tasks.map(t=>t.id));TASKS_DEFAULT.forEach(t=>{if(!gi.has(t.id)&&!_deletedIds.has(t.id))tasks.push(JSON.parse(JSON.stringify(t)));});
+        tasks.sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''),undefined,{numeric:true}));
+        if(c.activityLog&&c.activityLog.length>0){const lts=new Set(activityLog.map(e=>e.ts));const mrgd=activityLog.concat(c.activityLog.filter(e=>!lts.has(e.ts)));mrgd.sort((a,b)=>b.ts-a.ts);activityLog=mrgd.slice(0,50);localStorage.setItem(LS_LOG,JSON.stringify(activityLog));}
+        localStorage.setItem(LS_KEY,JSON.stringify(tasks));
+        renderTable();updateKPIs();initCharts();renderPipeline();renderActivityLog();toast('Dados atualizados do GitHub ✓','ok');
+      }
+    }
+    const el=document.getElementById('sync-status');if(el)el.textContent='Sync: '+new Date().toLocaleTimeString('pt-BR');
+  }catch(e){}
+}
+
+function downloadPDF(){
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const s=stats();
+  doc.setFillColor(27,126,200);doc.rect(0,0,210,18,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont(undefined,'bold');
+  doc.text('VLI · Dashboard Fluxo Paralelo 2026',10,11);doc.text('Emitido: '+new Date().toLocaleString('pt-BR'),200,11,{align:'right'});
+  doc.setTextColor(30,35,50);doc.setFontSize(9);doc.setFont(undefined,'normal');
+  let y=26;
+  doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text('KPIs',10,y);y+=6;doc.setFontSize(9);doc.setFont(undefined,'normal');
+  doc.text('Progresso geral: '+s.overall+'%   Concluídas: '+s.done+'   Em andamento: '+s.wip+'   Pendentes: '+s.pend+'   Total: '+s.total,10,y);y+=10;
+  doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text('Progresso por Etapa',10,y);y+=6;
+  for(let g=1;g<=14;g++){
+    const gt=active().filter(t=>t.g===g);if(!gt.length)continue;
+    const pct=Math.round(gt.reduce((s,t)=>s+t.prog,0)/gt.length);
+    doc.setFontSize(8);doc.setFont(undefined,'normal');doc.text('E'+g+' '+(ETAPA_NAMES[g]||''),10,y);
+    const c=pct===100?[22,163,74]:pct>0?[244,121,32]:[150,160,175];doc.setFillColor(...c);doc.rect(80,y-3,pct*0.8,4,'F');
+    doc.text(pct+'%',165,y);y+=6;if(y>275){doc.addPage();y=15;}
+  }
+  doc.save('VLI_FluxoParalelo_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.pdf');
+}
+
+function downloadExcel(){
+  const wb=XLSX.utils.book_new();const s=stats();
+  const resumo=[['VLI · Fluxo Paralelo 2026'],['Emitido',new Date().toLocaleString('pt-BR')],[''],['Progresso Geral','Concluídas','Em Andamento','Não Iniciadas','Total'],[s.overall+'%',s.done,s.wip,s.pend,s.total]];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(resumo),'Resumo');
+  const atHead=['Código','Etapa','Atividade','Progresso','Responsável','Observações'];
+  const atRows=active().map(t=>[t.id,t.g+' – '+(ETAPA_NAMES[t.g]||''),t.title,t.prog+'%',t.resp||'',t.obs||'']);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([atHead,...atRows]),'Atividades');
+  const etHead=['Etapa','Nome','Total','Concluídas','Em Andamento','Pendentes','%'];
+  const etRows=[];for(let g=1;g<=14;g++){const gt=active().filter(t=>t.g===g);if(!gt.length)continue;const pct=Math.round(gt.reduce((s,t)=>s+t.prog,0)/gt.length);etRows.push([g,ETAPA_NAMES[g]||'',gt.length,gt.filter(t=>t.prog===100).length,gt.filter(t=>t.prog>0&&t.prog<100).length,gt.filter(t=>t.prog===0).length,pct+'%']);}
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([etHead,...etRows]),'Por Etapa');
+  XLSX.writeFile(wb,'VLI_FluxoParalelo_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.xlsx');
+}
+</script>
+</body>
+</html>
