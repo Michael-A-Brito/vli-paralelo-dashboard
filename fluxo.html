@@ -730,10 +730,7 @@ async function syncFromGist(){
     const d=await r.json();const c=JSON.parse(d.files['vli_fluxo_data.json'].content);
     if(c.tasks&&c.tasks.length>0){
       const dt=new Date(c.lastSync).toLocaleString('pt-BR');
-      if(confirm('Restaurar '+c.tasks.length+' atividades?
-Salvo em: '+dt+'
-
-Substituirá dados locais.')){tasks=c.tasks;save();renderTable();updateKPIs();initCharts();renderPipeline();toast('Restaurado ✓','ok');}
+      if(confirm('Restaurar '+c.tasks.length+' atividades?\nSalvo em: '+dt+'\n\nSubstituirá dados locais.')){tasks=c.tasks;save();renderTable();updateKPIs();initCharts();renderPipeline();toast('Restaurado ✓','ok');}
     }else{toast('Nenhum dado no Gist ainda','warn');}
   }catch(e){toast('Erro ao carregar do GitHub','warn');}
 }
