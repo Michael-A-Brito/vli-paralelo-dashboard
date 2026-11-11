@@ -288,7 +288,7 @@ tr.grp-hdr td{background:linear-gradient(90deg,rgba(27,126,200,.06),rgba(244,121
 
 <script>
 const GIST_ID='bf4c4737c5ba9548740eaa364f332fb9';
-const ENCRYPTED_TOKEN='3124391f64417d4c3b221a0d02455c442203212d736a7d430f227a1407044a001f3c78275b547361';
+const ENCRYPTED_TOKEN='3124391f7e546a55133e2535626a46471e7518307b66516267222b0e7d5458581225797263434600';
 const LS_KEY='vli_fluxo_v1';
 const LS_DEL='vli_fluxo_del';
 const LS_LOG='vli_fluxo_log';
@@ -493,6 +493,7 @@ function doLogin(){
 function init(){
   load();renderTable();updateKPIs();initCharts();renderPipeline();renderActivityLog();
   setTimeout(()=>syncFromGistSilent(),800);
+  setInterval(()=>syncFromGistSilent(),60000); // auto-sync a cada 60s
   document.addEventListener('click',function(e){
     if(!e.target.closest('#filter-prog-wrap')){const p=document.getElementById('filter-prog-panel');if(p)p.style.display='none';}
   });
@@ -742,18 +743,30 @@ async function syncFromGistSilent(){
     if(!r.ok)return;
     const d=await r.json();const c=JSON.parse(d.files['vli_fluxo_data.json'].content);
     if(c.tasks&&c.tasks.length>0){
-      const localDate=new Date(parseInt(localStorage.getItem(LS_SAVE)||'0'));
-      const gistDate=new Date(c.lastSync||0);
-      if(gistDate>localDate){
-        if(c.deletedIds)c.deletedIds.forEach(id=>_deletedIds.add(id));localStorage.setItem(LS_DEL,JSON.stringify([..._deletedIds]));
-        tasks=c.tasks.filter(t=>!_deletedIds.has(t.id));
-        const dm={};TASKS_DEFAULT.forEach(t=>{dm[t.id]=t;});
-        const gi=new Set(tasks.map(t=>t.id));TASKS_DEFAULT.forEach(t=>{if(!gi.has(t.id)&&!_deletedIds.has(t.id))tasks.push(JSON.parse(JSON.stringify(t)));});
-        tasks.sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''),undefined,{numeric:true}));
-        if(c.activityLog&&c.activityLog.length>0){const lts=new Set(activityLog.map(e=>e.ts));const mrgd=activityLog.concat(c.activityLog.filter(e=>!lts.has(e.ts)));mrgd.sort((a,b)=>b.ts-a.ts);activityLog=mrgd.slice(0,50);localStorage.setItem(LS_LOG,JSON.stringify(activityLog));}
+      // Merge tombstones
+      if(c.deletedIds&&c.deletedIds.length>0){c.deletedIds.forEach(id=>_deletedIds.add(id));localStorage.setItem(LS_DEL,JSON.stringify([..._deletedIds]));}
+      // Always merge by _ts: for each task, the version with higher _ts wins
+      const localMap={};tasks.forEach(t=>{localMap[t.id]=t;});
+      const remMap={};c.tasks.forEach(t=>{remMap[t.id]=t;});
+      const allIds=new Set([...Object.keys(localMap),...Object.keys(remMap)]);
+      let changed=false;
+      const merged=[];
+      allIds.forEach(id=>{
+        if(_deletedIds.has(id))return;
+        const loc=localMap[id],rem=remMap[id];
+        if(loc&&rem){const winner=(rem._ts||0)>(loc._ts||0)?rem:loc;if((rem._ts||0)>(loc._ts||0))changed=true;merged.push(winner);}
+        else if(rem&&!_deletedIds.has(rem.id)){merged.push(rem);changed=true;}
+        else if(loc){merged.push(loc);}
+      });
+      merged.sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''),undefined,{numeric:true}));
+      tasks=merged;
+      if(changed){
         localStorage.setItem(LS_KEY,JSON.stringify(tasks));
-        renderTable();updateKPIs();initCharts();renderPipeline();renderActivityLog();toast('Dados atualizados do GitHub ✓','ok');
+        renderTable();updateKPIs();initCharts();renderPipeline();
+        toast('Dados sincronizados ✓','ok');
       }
+      // Merge activity log
+      if(c.activityLog&&c.activityLog.length>0){const lts=new Set(activityLog.map(e=>e.ts));const mrgd=activityLog.concat(c.activityLog.filter(e=>!lts.has(e.ts)));mrgd.sort((a,b)=>b.ts-a.ts);activityLog=mrgd.slice(0,50);localStorage.setItem(LS_LOG,JSON.stringify(activityLog));renderActivityLog();}
     }
     const el=document.getElementById('sync-status');if(el)el.textContent='Sync: '+new Date().toLocaleTimeString('pt-BR');
   }catch(e){}
